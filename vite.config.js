@@ -4,6 +4,14 @@ import path from "path";
 
 export default defineConfig({
   plugins: [vue()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "packages/renderer/src"),
+      "@plugins": path.resolve(__dirname, "plugins"),
+      // 解决node-fetch依赖问题
+      "node-fetch": "whatwg-fetch",
+    },
+  },
   build: {
     outDir: "dist",
     emptyOutDir: true,
@@ -17,12 +25,6 @@ export default defineConfig({
     fs: {
       // 允许访问项目根目录之外的文件
       allow: ["."],
-    },
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "packages/renderer/src"),
-      "@plugins": path.resolve(__dirname, "plugins"),
     },
   },
   publicDir: "public",

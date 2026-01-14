@@ -64,9 +64,17 @@
               ></a-icon>
               <p style="margin: 16px 0">点击上传规则文件</p>
               <a-button type="primary">选择JSON文件</a-button>
-              <p style="margin: 16px 0; color: #999; font-size: 12px">
-                规则文件格式示例：
-                <pre style="background: #f5f5f5; padding: 8px; text-align: left; font-size: 11px; overflow-x: auto">
+              <div style="margin: 16px 0; color: #999; font-size: 12px">
+                <div style="margin-bottom: 8px">规则文件格式示例：</div>
+                <pre
+                  style="
+                    background: #f5f5f5;
+                    padding: 8px;
+                    text-align: left;
+                    font-size: 11px;
+                    overflow-x: auto;
+                  "
+                >
 {
   "rules": [
     {
@@ -81,7 +89,7 @@
   }
 }
                 </pre>
-              </p>
+              </div>
             </div>
             <div v-else style="padding: 24px; text-align: center">
               <a-icon
@@ -90,10 +98,13 @@
               ></a-icon>
               <p style="margin: 16px 0">规则文件已上传</p>
               <a-tag color="green">{{ rulesFile.name }}</a-tag>
-              <a-button 
-                type="default" 
+              <a-button
+                type="default"
                 style="margin-left: 12px"
-                @click="rulesFile = null; rulesContent = null"
+                @click="
+                  rulesFile = null;
+                  rulesContent = null;
+                "
               >
                 重新选择
               </a-button>
@@ -120,8 +131,15 @@
                 <div class="rule-index">{{ index + 1 }}</div>
                 <div class="rule-content">
                   <p><strong>查找:</strong> "{{ item.findText }}"</p>
-                  <p><strong>替换为:</strong> "{{ item.replaceText || '（删除）' }}"</p>
-                  <p><strong>匹配模式:</strong> {{ item.matchMode === 'regex' ? '正则表达式' : '普通文本' }}</p>
+                  <p>
+                    <strong>替换为:</strong> "{{
+                      item.replaceText || "（删除）"
+                    }}"
+                  </p>
+                  <p>
+                    <strong>匹配模式:</strong>
+                    {{ item.matchMode === "regex" ? "正则表达式" : "普通文本" }}
+                  </p>
                 </div>
               </div>
             </a-list-item>
@@ -132,13 +150,13 @@
         <div class="settings-preview">
           <a-descriptions bordered column="2">
             <a-descriptions-item label="区分大小写">
-              {{ rulesContent.settings?.caseSensitive ? '是' : '否' }}
+              {{ rulesContent.settings?.caseSensitive ? "是" : "否" }}
             </a-descriptions-item>
             <a-descriptions-item label="匹配整个单元格">
-              {{ rulesContent.settings?.matchEntireCell ? '是' : '否' }}
+              {{ rulesContent.settings?.matchEntireCell ? "是" : "否" }}
             </a-descriptions-item>
             <a-descriptions-item label="忽略隐藏单元格">
-              {{ rulesContent.settings?.ignoreHiddenCells ? '是' : '否' }}
+              {{ rulesContent.settings?.ignoreHiddenCells ? "是" : "否" }}
             </a-descriptions-item>
             <a-descriptions-item label="处理范围">
               {{ getRangeOptionText() }}
@@ -164,8 +182,11 @@
 
         <div class="settings-summary">
           <h4>处理设置：</h4>
-          <p><strong>替换规则数量：</strong>{{ rulesContent?.rules?.length || 0 }}</p>
-          <p><strong>规则文件：</strong>{{ rulesFile?.name || '未选择' }}</p>
+          <p>
+            <strong>替换规则数量：</strong
+            >{{ rulesContent?.rules?.length || 0 }}
+          </p>
+          <p><strong>规则文件：</strong>{{ rulesFile?.name || "未选择" }}</p>
         </div>
 
         <a-button
@@ -174,7 +195,7 @@
           @click="processFiles"
           :disabled="isProcessing.value"
         >
-          {{ isProcessing.value ? '处理中...' : '开始处理' }}
+          {{ isProcessing.value ? "处理中..." : "开始处理" }}
         </a-button>
       </div>
     </div>
@@ -226,7 +247,7 @@ const getRangeOptionText = () => {
   const ranges = {
     all: "整个工作表",
     data: "仅数据区域",
-    custom: "自定义范围"
+    custom: "自定义范围",
   };
   return ranges[rulesContent?.settings?.rangeOption || "all"] || "整个工作表";
 };
@@ -275,7 +296,11 @@ const handleNextStep = async () => {
     logs.value.push("进入上传规则文件步骤...");
   } else if (currentStep.value === 2) {
     // 进入步骤3：规则预览
-    if (!rulesContent || !rulesContent.rules || rulesContent.rules.length === 0) {
+    if (
+      !rulesContent ||
+      !rulesContent.rules ||
+      rulesContent.rules.length === 0
+    ) {
       logs.value.push("请先上传有效的规则文件");
       return;
     }
@@ -399,7 +424,7 @@ const processFiles = async () => {
       const processingData = {
         file: fileItem.file,
         replacementRules: rulesContent.rules,
-        settings: rulesContent.settings || {}
+        settings: rulesContent.settings || {},
       };
 
       const result = await runPy(script, processingData);

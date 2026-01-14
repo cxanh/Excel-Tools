@@ -147,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, defineExpose } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 import {
   DownOutlined,

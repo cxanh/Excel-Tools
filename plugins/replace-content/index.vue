@@ -261,9 +261,14 @@
           <p>从 {{ files.value.length }} 项任务中，耗时约 0 秒</p>
           <p>
             成功
-            {{ processedFiles.filter((f) => f.status === "success").length }}
+            {{
+              processedFiles.value.filter((f) => f.status === "success").length
+            }}
             项，失败
-            {{ processedFiles.filter((f) => f.status === "error").length }} 项
+            {{
+              processedFiles.value.filter((f) => f.status === "error").length
+            }}
+            项
           </p>
         </div>
       </div>
