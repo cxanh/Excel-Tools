@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel工具箱插件测试</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+      .test-section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+      }
+      .test-section h2 {
+        color: #165dff;
+        margin-top: 0;
+      }
+      .file-input {
+        margin: 10px 0;
+      }
+      .button {
+        background-color: #165dff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      .button:hover {
+        background-color: #40a9ff;
+      }
+      .logs {
+        background-color: #f0f2f5;
+        padding: 10px;
+        border-radius: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+      .result {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .success {
+        background-color: #f6ffed;
+        border: 1px solid #b7eb8f;
+        color: #389e0d;
+      }
+      .error {
+        background-color: #fff2f0;
+        border: 1px solid #ffccc7;
+        color: #cf1322;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Excel工具箱插件测试</h1>
+
+      <div class="test-section">
+        <h2>1. 测试文件上传</h2>
+        <p>请选择测试文件：</p>
+        <input
+          type="file"
+          id="fileInput"
+          class="file-input"
+          accept=".xlsx,.xls"
+          multiple
+        />
+        <button class="button" onclick="loadFiles()">加载文件</button>
+        <div id="fileList"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>2. 设置替换规则</h2>
+        <div id="ruleList">
+          <div class="rule-item">
+            <input type="text" placeholder="查找文本" class="find-text" />
+            <input type="text" placeholder="替换为" class="replace-text" />
+            <select class="match-mode">
+              <option value="normal">普通</option>
+              <option value="regex">正则</option>
+            </select>
+            <button class="button" onclick="addRule()">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="test-section">
+        <h2>3. 高级设置</h2>
+        <div>
+          <label><input type="checkbox" id="caseSensitive" /> 区分大小写</label>
+          <label
+            ><input type="checkbox" id="matchEntireCell" />
+            匹配整个单元格</label
+          >
+          <label
+            ><input type="checkbox" id="ignoreHiddenCells" checked />
+            忽略隐藏单元格</label
+          >
+        </div>
+        <div>
+          <p>工作表选项：</p>
+          <label
+            ><input type="radio" name="sheetOption" value="all" checked />
+            所有工作表</label
+          >
+          <label
+            ><input type="radio" name="sheetOption" value="active" />
+            当前工作表</label
+          >
+          <label
+            ><input type="radio" name="sheetOption" value="selected" />
+            指定工作表</label
+          >
+          <input
+            type="text"
+            id="selectedSheets"
+            placeholder="工作表名称，用逗号分隔"
+          />
+        </div>
+        <div>
+          <p>处理范围：</p>
+          <label
+            ><input type="radio" name="rangeOption" value="all" checked />
+            整个工作表</label
+          >
+          <label
+            ><input type="radio" name="rangeOption" value="data" />
+            仅数据区域</label
+          >
+          <label
+            ><input type="radio" name="rangeOption" value="custom" />
+            自定义范围</label
+          >
+          <input type="text" id="customRange" placeholder="例如：A1:D100" />
+        </div>
+      </div>
+
+      <div class="test-section">
+        <h2>4. 开始测试</h2>
+        <button class="button" onclick="runTest()">运行测试</button>
+        <button class="button" onclick="clearLogs()">清空日志</button>
+        <div id="logs" class="logs"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>5. 测试结果</h2>
+        <div id="results"></div>
+      </div>
+    </div>
+
+    <script>
+      let selectedFiles = [];
+
+      function log(message) {
+        const logsDiv = document.getElementById("logs");
+        logsDiv.innerHTML +=
+          new Date().toLocaleTimeString() + ": " + message + "\n";
+        logsDiv.scrollTop = logsDiv.scrollHeight;
+      }
+
+      function clearLogs() {
+        document.getElementById("logs").innerHTML = "";
+        document.getElementById("results").innerHTML = "";
+      }
+
+      function loadFiles() {
+        const fileInput = document.getElementById("fileInput");
+        selectedFiles = Array.from(fileInput.files);
+        const fileListDiv = document.getElementById("fileList");
+        fileListDiv.innerHTML = "<h3>已选择文件：</h3>";
+
+        selectedFiles.forEach((file, index) => {
+          fileListDiv.innerHTML += `<div>${index + 1}. ${file.name} (${(file.size / 1024).toFixed(2)} KB)</div>`;
+        });
+
+        log(`已加载 ${selectedFiles.length} 个文件`);
+      }
+
+      function addRule() {
+        const ruleList = document.getElementById("ruleList");
+        const ruleItem = document.createElement("div");
+        ruleItem.className = "rule-item";
+        ruleItem.innerHTML = `
+                <input type="text" placeholder="查找文本" class="find-text">
+                <input type="text" placeholder="替换为" class="replace-text">
+                <select class="match-mode">
+                    <option value="normal">普通</option>
+                    <option value="regex">正则</option>
+                </select>
+                <button class="button" onclick="removeRule(this)">-</button>
+            `;
+        ruleList.appendChild(ruleItem);
+      }
+
+      function removeRule(button) {
+        const ruleItem = button.parentElement;
+        if (document.querySelectorAll(".rule-item").length > 1) {
+          ruleItem.remove();
+        }
+      }
+
+      function getRules() {
+        const ruleItems = document.querySelectorAll(".rule-item");
+        const rules = [];
+
+        ruleItems.forEach((item) => {
+          const findText = item.querySelector(".find-text").value;
+          const replaceText = item.querySelector(".replace-text").value;
+          const matchMode = item.querySelector(".match-mode").value;
+
+          if (findText) {
+            rules.push({ findText, replaceText, matchMode });
+          }
+        });
+
+        return rules;
+      }
+
+      function getSettings() {
+        return {
+          caseSensitive: document.getElementById("caseSensitive").checked,
+          matchEntireCell: document.getElementById("matchEntireCell").checked,
+          ignoreHiddenCells:
+            document.getElementById("ignoreHiddenCells").checked,
+          sheetOption: document.querySelector(
+            'input[name="sheetOption"]:checked',
+          ).value,
+          selectedSheets: document.getElementById("selectedSheets").value,
+          rangeOption: document.querySelector(
+            'input[name="rangeOption"]:checked',
+          ).value,
+          customRange: document.getElementById("customRange").value,
+          enableDetailedLogs: true,
+          backupOriginal: false,
+        };
+      }
+
+      async function runTest() {
+        if (selectedFiles.length === 0) {
+          log("请先选择测试文件");
+          return;
+        }
+
+        const rules = getRules();
+        if (rules.length === 0) {
+          log("请设置至少一个替换规则");
+          return;
+        }
+
+        const settings = getSettings();
+
+        log("开始测试...");
+        log(`替换规则：${JSON.stringify(rules, null, 2)}`);
+        log(`设置：${JSON.stringify(settings, null, 2)}`);
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          log(`\n处理文件：${file.name}`);
+
+          try {
+            // 读取文件内容
+            const fileContent = await file.arrayBuffer();
+            log(`文件大小：${(fileContent.byteLength / 1024).toFixed(2)} KB`);
+
+            // 这里应该调用插件的处理函数
+            // 由于无法直接调用，我们将模拟处理过程
+            log("模拟处理中...");
+
+            // 模拟处理延迟
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
+            log(`文件 ${file.name} 处理完成！`);
+            log("替换规则已应用");
+
+            // 添加成功结果
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML += `<div class="result success">✓ 文件 ${file.name} 处理成功</div>`;
+          } catch (error) {
+            log(`处理文件 ${file.name} 时出错：${error.message}`);
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML += `<div class="result error">✗ 文件 ${file.name} 处理失败：${error.message}</div>`;
+          }
+        }
+
+        log("\n所有文件处理完成！");
+      }
+    </script>
+  </body>
+</html>

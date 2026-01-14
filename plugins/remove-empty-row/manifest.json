@@ -1,0 +1,6 @@
+{
+  "key": "remove-empty-row",
+  "name": "删除 Excel 空白内容",
+  "icon": "border-outer",
+  "description": "删除 Excel 空白内容（空白工作表、空白行列等）"
+}

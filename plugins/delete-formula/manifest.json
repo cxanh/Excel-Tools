@@ -1,0 +1,10 @@
+{
+  "name": "删除Excel公式",
+  "key": "delete-formula",
+  "description": "删除Excel中的公式，只保留计算后的值",
+  "category": "content",
+  "icon": "/asset/execl_icon00_6.png",
+  "version": "1.0.0",
+  "author": "Excel Toolbox Team",
+  "date": "2026-01-14"
+}

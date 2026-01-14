@@ -1,0 +1,6 @@
+{
+  "key": "replace-picture",
+  "name": "替换图片",
+  "icon": "picture",
+  "description": "替换 Excel 文件中的图片"
+}

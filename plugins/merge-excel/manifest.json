@@ -1,0 +1,10 @@
+{
+  "name": "合并Excel文件",
+  "description": "批量合并多个Excel文件的内容到一个文件中",
+  "key": "merge-excel",
+  "version": "1.0.0",
+  "author": "Excel工具箱",
+  "category": "merge",
+  "icon": "/asset/execl_icon00_3.png",
+  "dependencies": ["openpyxl", "pandas"]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "generate-from-template",
+  "title": "根据模板生成文档",
+  "description": "先指定一个 Excel 文档作为模板，然后根据数据源批量生成多个 Excel 文档",
+  "version": "1.0.0",
+  "icon": "/asset/execl_icon00_4.png",
+  "category": "content",
+  "author": "Excel Toolbox Team",
+  "created": "2026-01-14",
+  "updated": "2026-01-14",
+  "compatibility": "1.0.0+"
+}

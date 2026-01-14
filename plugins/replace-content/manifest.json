@@ -1,0 +1,17 @@
+{
+  "name": "按规则修改内容",
+  "key": "replace-content",
+  "version": "1.0.0",
+  "description": "用于批量在 Excel 文档中查找并替换/删除指定内容",
+  "author": "Excel Toolbox",
+  "category": "content",
+  "icon": "/asset/execl_icon00_2.png",
+  "entry": "index.vue",
+  "worker": "worker.py",
+  "hot": true,
+  "requires": ["openpyxl", "pandas"],
+  "config": {
+    "minExcelVersion": "2007",
+    "maxFileSize": "100MB"
+  }
+}

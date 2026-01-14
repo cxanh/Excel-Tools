@@ -1,0 +1,10 @@
+{
+  "name": "删除Excel重复行",
+  "key": "delete-duplicate-rows",
+  "description": "删除Excel中的重复行数据",
+  "category": "content",
+  "icon": "/asset/execl_icon00_7.png",
+  "version": "1.0.0",
+  "author": "Excel Toolbox Team",
+  "date": "2026-01-14"
+}

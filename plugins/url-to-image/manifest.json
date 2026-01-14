@@ -1,0 +1,10 @@
+{
+  "name": "Excel中图片地址转为图片",
+  "key": "url-to-image",
+  "description": "将Excel单元格里的本地路径批量还原成嵌入图片",
+  "category": "content",
+  "icon": "/asset/execl_icon00_8.png",
+  "version": "1.0.0",
+  "author": "Excel Toolbox Team",
+  "date": "2026-01-14"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "import-rules",
+  "title": "导入规则修改内容",
+  "description": "当不同的 Excel 文档有不同的修改规则时，可以通过导入规则文件进行批量修改",
+  "version": "1.0.0",
+  "icon": "/asset/execl_icon00_3.png",
+  "category": "content",
+  "author": "Excel Toolbox Team",
+  "created": "2026-01-14",
+  "updated": "2026-01-14",
+  "compatibility": "1.0.0+"
+}

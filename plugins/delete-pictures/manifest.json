@@ -1,0 +1,10 @@
+{
+  "name": "删除图片",
+  "key": "delete-pictures",
+  "description": "批量删除 Excel 文档中的图片，可以删除指定工作表或整个工作簿中的图片",
+  "category": "content",
+  "icon": "/asset/execl_icon00_5.png",
+  "version": "1.0.0",
+  "author": "Excel Toolbox Team",
+  "date": "2026-01-14"
+}
