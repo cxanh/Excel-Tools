@@ -6,7 +6,7 @@
 
 - **壳**: Electron 27 + electron-builder
 - **渲染**: Vue3 + Vite + Ant Design Vue
-- **算法**: pyodide@0.24 (CPython 3.11 WASM)
+- **算法**: pyodide@0.24.1 (CPython 3.11 WASM)
 - **插件**: 热插拔，无需重编主程序
 
 ## 目录结构

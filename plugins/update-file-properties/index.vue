@@ -1,0 +1,415 @@
+<template>
+  <div class="plugin-container">
+    <!-- 插件模板 -->
+    <plugin-template
+      ref="pluginTemplate"
+      :plugin-title="pluginTitle"
+      :current-step="currentStep"
+      @add-file="handleAddFile"
+      @import-folder="handleImportFromFolder"
+      @more-action="handleMoreAction"
+      @next-step="handleNextStep"
+      @prev-step="handlePrevStep"
+      @remove-file="handleRemoveFile"
+    />
+
+    <!-- 处理步骤内容 -->
+    <div v-if="currentStep === 0" class="step-content">
+      <!-- 这一步由 PluginTemplate 组件负责 -->
+    </div>
+
+    <!-- 步骤1：设置文件属性 -->
+    <div v-else-if="currentStep === 1" class="step-content">
+      <h3 class="step-title">设置文件属性</h3>
+      <a-divider />
+
+      <a-card title="文件属性设置" class="setting-card">
+        <a-form layout="vertical">
+          <a-row :gutter="[16, 16]">
+            <a-col :span="12">
+              <a-form-item label="标题">
+                <a-input
+                  v-model:value="settings.properties.title"
+                  placeholder="输入文件标题"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="作者">
+                <a-input
+                  v-model:value="settings.properties.author"
+                  placeholder="输入作者名称"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          
+          <a-row :gutter="[16, 16]">
+            <a-col :span="12">
+              <a-form-item label="主题">
+                <a-input
+                  v-model:value="settings.properties.subject"
+                  placeholder="输入文件主题"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="分类">
+                <a-input
+                  v-model:value="settings.properties.category"
+                  placeholder="输入文件分类"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          
+          <a-row :gutter="[16, 16]">
+            <a-col :span="12">
+              <a-form-item label="关键词">
+                <a-input
+                  v-model:value="settings.properties.keywords"
+                  placeholder="输入关键词，多个关键词用分号分隔"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="状态">
+                <a-input
+                  v-model:value="settings.properties.status"
+                  placeholder="输入文件状态"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          
+          <a-row :gutter="[16, 16]">
+            <a-col :span="12">
+              <a-form-item label="公司">
+                <a-input
+                  v-model:value="settings.properties.company"
+                  placeholder="输入公司名称"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="经理">
+                <a-input
+                  v-model:value="settings.properties.manager"
+                  placeholder="输入经理名称"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          
+          <a-row :gutter="[16, 16]">
+            <a-col :span="24">
+              <a-form-item label="描述">
+                <a-textarea
+                  v-model:value="settings.properties.description"
+                  placeholder="输入文件描述"
+                  :rows="4"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-form>
+      </a-card>
+    </div>
+
+    <!-- 步骤2：设置其它选项 -->
+    <div v-else-if="currentStep === 2" class="step-content">
+      <!-- 预留步骤 -->
+      <h3 class="step-title">设置其它选项</h3>
+      <a-divider />
+      <p class="placeholder-text">此步骤暂无配置项</p>
+    </div>
+
+    <!-- 步骤3：设置输出目录 -->
+    <div v-else-if="currentStep === 3" class="step-content">
+      <!-- 预留步骤 -->
+      <h3 class="step-title">设置输出目录</h3>
+      <a-divider />
+      <p class="placeholder-text">处理完成后将自动下载文件</p>
+    </div>
+
+    <!-- 步骤4：开始处理 -->
+    <div v-else-if="currentStep === 4" class="step-content">
+      <h3 class="step-title">开始处理</h3>
+      <a-divider />
+
+      <!-- 处理日志 -->
+      <a-card title="处理日志" class="log-card">
+        <div class="log-container">
+          <div v-for="(log, index) in logs" :key="index" class="log-item">
+            {{ log }}
+          </div>
+        </div>
+      </a-card>
+
+      <!-- 开始处理按钮 -->
+      <div class="start-process-container">
+        <a-button
+          type="primary"
+          size="large"
+          icon="play-circle"
+          @click="startProcess"
+          :disabled="isProcessing"
+        >
+          <template #icon>
+            <a-spin v-if="isProcessing" />
+            <play-circle-outlined v-else />
+          </template>
+          {{ isProcessing ? '处理中...' : '开始处理' }}
+        </a-button>
+      </div>
+    </div>
+
+    <!-- 处理状态 -->
+    <a-modal
+      v-model:open="showResultModal"
+      title="处理结果"
+      @ok="showResultModal = false"
+    >
+      <div v-if="processResult.success" class="success-result">
+        <a-result
+          status="success"
+          title="处理成功"
+          sub-title="所有文件已成功处理完成"
+        >
+          <template #extra>
+            <a-button type="primary" @click="showResultModal = false">
+              确定
+            </a-button>
+          </template>
+        </a-result>
+      </div>
+      <div v-else class="error-result">
+        <a-result
+          status="error"
+          title="处理失败"
+          :sub-title="processResult.error || '处理过程中发生错误'"
+        >
+          <template #extra>
+            <a-button type="primary" @click="showResultModal = false">
+              确定
+            </a-button>
+          </template>
+        </a-result>
+      </div>
+    </a-modal>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { PlayCircleOutlined } from '@ant-design/icons-vue';
+import PluginTemplate from '@/components/PluginTemplate.vue';
+import { runPy } from '@/utils/py';
+import { getPythonScript } from '@/utils/plugin';
+
+const router = useRouter();
+const pluginTitle = '修改 Excel 文件属性';
+
+// 插件模板引用
+const pluginTemplate = ref(null);
+
+// 处理步骤
+const currentStep = ref(0);
+const maxStep = 4;
+
+// 处理状态
+const isProcessing = ref(false);
+const logs = ref([]);
+const processResult = ref({ success: false, error: null });
+const showResultModal = ref(false);
+
+// 插件设置
+const settings = reactive({
+  properties: {
+    title: '',
+    author: '',
+    subject: '',
+    description: '',
+    keywords: '',
+    category: '',
+    status: '',
+    company: '',
+    manager: ''
+  }
+});
+
+// 处理文件选择
+const handleAddFile = async (files) => {
+  // 处理文件添加
+  console.log('添加文件:', files);
+};
+
+// 从文件夹导入
+const handleImportFromFolder = () => {
+  console.log('从文件夹导入');
+};
+
+// 更多操作
+const handleMoreAction = (action) => {
+  console.log('更多操作:', action);
+  if (action === 'paste') {
+    // 从剪贴板读取
+  } else if (action === 'clear') {
+    // 清空列表
+  }
+};
+
+// 下一步
+const handleNextStep = () => {
+  if (currentStep.value < maxStep) {
+    currentStep.value++;
+  }
+};
+
+// 上一步
+const handlePrevStep = () => {
+  if (currentStep.value > 0) {
+    currentStep.value--;
+  }
+};
+
+// 删除文件
+const handleRemoveFile = (key) => {
+  console.log('删除文件:', key);
+};
+
+// 开始处理
+const startProcess = async () => {
+  if (!pluginTemplate.value || pluginTemplate.value.files.length === 0) {
+    return;
+  }
+  
+  isProcessing.value = true;
+  logs.value = ['开始处理文件...'];
+  
+  try {
+    // 获取Python脚本
+    const script = await getPythonScript('update-file-properties');
+    if (!script) {
+      logs.value.push('获取Python脚本失败');
+      return;
+    }
+    
+    // 遍历处理所有文件
+    const files = pluginTemplate.value.files;
+    for (let i = 0; i < files.length; i++) {
+      const fileItem = files[i];
+      logs.value.push(`正在处理文件：${fileItem.name}`);
+      
+      // 将File对象转换为Uint8Array
+      const fileBuffer = await fileItem.file.arrayBuffer();
+      const fileUint8Array = new Uint8Array(fileBuffer);
+      
+      // 调用Python脚本处理
+      const result = await runPy(script, {
+        type: "single",
+        file: fileUint8Array,
+        fileName: fileItem.name,
+        settings: settings
+      });
+      
+      logs.value.push(`${fileItem.name} 处理完成！`);
+      logs.value.push(...result.logs);
+      
+      // 下载处理后的文件
+      if (result.success && result.buffer) {
+        const blob = new Blob([result.buffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${fileItem.name.replace('.xlsx', '').replace('.xls', '')}_处理后.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+    
+    logs.value.push('所有文件处理完成！');
+    processResult.value = { success: true, error: null };
+    showResultModal.value = true;
+  } catch (error) {
+    logs.value.push(`处理错误: ${error.message}`);
+    processResult.value = { success: false, error: error.message };
+    showResultModal.value = true;
+  } finally {
+    isProcessing.value = false;
+  }
+};
+
+// 初始化
+onMounted(() => {
+  // 初始化设置
+  console.log('插件初始化');
+});
+</script>
+
+<style scoped>
+.plugin-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+.step-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+}
+
+.step-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.setting-card {
+  margin-bottom: 20px;
+}
+
+.log-card {
+  height: 400px;
+  overflow: hidden;
+}
+
+.log-container {
+  height: 330px;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #fafafa;
+  border-radius: 4px;
+}
+
+.log-item {
+  margin-bottom: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.start-process-container {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.placeholder-text {
+  color: #999;
+  text-align: center;
+  padding: 50px 0;
+}
+
+.success-result,
+.error-result {
+  text-align: center;
+}
+</style>

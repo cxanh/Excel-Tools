@@ -1,0 +1,1 @@
+async function o(t){try{const r=await fetch(`/@plugins/${t}/worker.py`);if(!r.ok)throw new Error(`Failed to fetch script for plugin ${t}`);return await r.text()}catch(r){throw console.error(`Error getting Python script for plugin ${t}:`,r),r}}export{o as g};

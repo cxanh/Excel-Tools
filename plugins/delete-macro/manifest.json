@@ -1,0 +1,7 @@
+{
+  "key": "delete-macro",
+  "name": "删除 Excel 中的宏",
+  "icon": "delete",
+  "description": "删除Excel文件中的所有宏和VBA代码",
+  "category": "文件内容处理"
+}

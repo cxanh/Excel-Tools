@@ -332,7 +332,11 @@ const processFiles = async () => {
     // 调用Python脚本处理
     logs.value.push("开始合并Excel文件...");
     logs.value.push(`设置参数：${JSON.stringify(settings.value)}`);
-    const result = await runPy(script, filesToProcess);
+    const result = await runPy(script, {
+      type: "multiple",
+      files: filesToProcess,
+      settings: settings.value,
+    });
     progress.value = 80;
 
     if (result.success) {

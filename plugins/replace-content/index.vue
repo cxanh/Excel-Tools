@@ -38,7 +38,7 @@
             添加替换规则
           </a-button>
 
-          <a-list :data-source="replacementRules" bordered size="small">
+          <a-list :data-source="replacementRules || []" bordered size="small">
             <template #renderItem="{ item, index }">
               <a-list-item>
                 <div class="rule-item">
@@ -199,16 +199,16 @@
       <h3>处理确认</h3>
       <div class="processing-summary">
         <p>
-          即将处理 <strong>{{ files.value.length }}</strong> 个文件：
+          即将处理 <strong>{{ (files || []).length }}</strong> 个文件：
         </p>
         <ul>
-          <li v-for="file in files.value" :key="file.key">{{ file.name }}</li>
+          <li v-for="file in files || []" :key="file.key">{{ file.name }}</li>
         </ul>
 
         <div class="settings-summary">
           <h4>替换规则：</h4>
           <ul class="rule-summary">
-            <li v-for="(rule, index) in replacementRules" :key="index">
+            <li v-for="(rule, index) in replacementRules || []" :key="index">
               {{ index + 1 }}. 查找: "{{ rule.findText }}" → 替换为: "{{
                 rule.replaceText || "（删除）"
               }}" ({{ rule.matchMode === "regex" ? "正则" : "普通" }})
@@ -258,15 +258,16 @@
         </div>
         <div class="success-info">
           <h2>处理完成</h2>
-          <p>从 {{ files.value.length }} 项任务中，耗时约 0 秒</p>
+          <p>从 {{ files?.length || 0 }} 项任务中，耗时约 0 秒</p>
           <p>
             成功
             {{
-              processedFiles.value.filter((f) => f.status === "success").length
+              (processedFiles?.filter((f) => f.status === "success") || [])
+                .length
             }}
-            项，失败
+            项， 失败
             {{
-              processedFiles.value.filter((f) => f.status === "error").length
+              (processedFiles?.filter((f) => f.status === "error") || []).length
             }}
             项
           </p>
@@ -323,7 +324,7 @@
           <div class="result-table-container">
             <a-table
               :columns="resultColumns"
-              :data-source="processedFiles.value"
+              :data-source="processedFiles || []"
               :pagination="false"
               bordered
               size="small"
@@ -511,7 +512,8 @@ const handleNextStep = async () => {
     currentStep.value = 4;
     logs.value.push("进入开始处理步骤...");
   } else if (currentStep.value === 4) {
-    // 进入步骤5：处理结果
+    // 进入步骤5：处理结果 - 实际处理文件
+    await processFiles();
     currentStep.value = 5;
     logs.value.push("进入处理结果步骤...");
   }

@@ -458,32 +458,34 @@ const generateFiles = async () => {
 
     // 调用Python脚本处理
     logs.value.push("开始批量生成...");
-    const result = await runPy(script, processingData);
+    const result = await runPy(script, {
+      type: "other",
+      data: processingData,
+    });
     progress.value = 80;
 
     if (result.success) {
       logs.value.push("文档批量生成完成！");
       logs.value.push(...result.logs);
 
-      // 模拟下载生成的文件
-      for (let i = 0; i < batchSize.value; i++) {
-        const blob = new Blob([result.buffer], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        // 根据规则生成文件名
-        let filename = settings.value.outputFilenameRule;
-        filename = filename.replace("{序号}", i + 1);
-        filename = filename.replace(
-          "{合同编号}",
-          `HT${(1000 + i).toString().slice(-3)}`,
-        );
-        a.download = filename;
-        // 模拟点击下载
-        logs.value.push(`生成文件: ${filename}`);
-        URL.revokeObjectURL(url);
+      // 下载生成的文件
+      if (result.data && result.data.resultFiles) {
+        for (const fileData of result.data.resultFiles) {
+          const blob = new Blob([fileData.content], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = fileData.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          logs.value.push(`生成并下载文件: ${fileData.filename}`);
+        }
+      } else {
+        logs.value.push("未返回生成的文件数据");
       }
     } else {
       logs.value.push(`生成失败: ${result.error}`);

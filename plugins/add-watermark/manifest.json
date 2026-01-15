@@ -1,0 +1,14 @@
+{
+  "name": "add-watermark",
+  "title": "添加 Excel 文字水印",
+  "description": "为 Excel 文件批量添加文字水印，支持自定义内容、样式、位置和透明度",
+  "version": "1.0.0",
+  "author": "",
+  "category": "watermark",
+  "icon": "/asset/execl_icon00.png",
+  "keywords": ["excel", "watermark", "文字水印", "批量"],
+  "dependencies": ["openpyxl"],
+  "supportedFormats": ["xlsx", "xlsm"],
+  "entry": "index.vue",
+  "worker": "worker.py"
+}

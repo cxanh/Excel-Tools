@@ -1,0 +1,7 @@
+{
+  "key": "convert-format",
+  "name": "Excel 转换为其它格式",
+  "icon": "file-excel",
+  "description": "将Excel文件转换为CSV、JSON、HTML等其他格式",
+  "category": "格式转换"
+}

@@ -420,11 +420,15 @@ const processFiles = async () => {
       const fileItem = files.value[i];
       logs.value.push(`正在处理文件：${fileItem.name}`);
 
-      // 构建处理数据对象
+      // 构建统一格式的输入数据
       const processingData = {
+        type: "single",
         file: fileItem.file,
-        replacementRules: rulesContent.rules,
-        settings: rulesContent.settings || {},
+        fileName: fileItem.name,
+        settings: {
+          ...(rulesContent.settings || {}),
+          replacementRules: rulesContent.rules,
+        },
       };
 
       const result = await runPy(script, processingData);

@@ -1,0 +1,7 @@
+{
+  "key": "extract-content",
+  "name": "提取 Excel 中的指定内容",
+  "icon": "copy",
+  "description": "从Excel文档中提取指定内容，支持按列、按行或按条件提取",
+  "category": "extract"
+}

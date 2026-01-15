@@ -1,0 +1,7 @@
+{
+  "key": "extract-images",
+  "name": "提取 Excel 文档中的图片",
+  "icon": "picture",
+  "description": "从Excel文档中提取所有图片并保存为单独文件",
+  "category": "数据提取"
+}

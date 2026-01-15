@@ -1,0 +1,7 @@
+{
+  "key": "replace-content",
+  "name": "按规则修改 Excel 内容",
+  "icon": "edit",
+  "description": "用于批量在 Excel 文档中查找并替换/删除指定内容",
+  "category": "content"
+}

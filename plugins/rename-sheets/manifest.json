@@ -1,0 +1,14 @@
+{
+  "name": "rename-sheets",
+  "title": "重命名 Excel 工作表",
+  "description": "为 Excel 文件批量重命名工作表，支持自定义命名规则和批量处理",
+  "version": "1.0.0",
+  "author": "",
+  "category": "sheet",
+  "icon": "/asset/execl_icon00.png",
+  "keywords": ["excel", "sheet", "rename", "批量"],
+  "dependencies": ["openpyxl"],
+  "supportedFormats": ["xlsx", "xlsm"],
+  "entry": "index.vue",
+  "worker": "worker.py"
+}

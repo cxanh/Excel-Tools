@@ -5,6 +5,9 @@
       <div class="loading-content">
         <a-spin size="large" tip="正在初始化 Python 环境，请稍候..." />
         <p class="loading-subtitle">这可能需要几分钟时间，取决于您的网络连接</p>
+        <div class="loading-progress" v-if="loadingProgress > 0">
+          <a-progress :percent="loadingProgress" :show-info="true" />
+        </div>
       </div>
     </div>
 
@@ -20,6 +23,7 @@
           icon="plus"
           @click="handleAddFile"
           :disabled="pyodideLoading"
+          :tooltip="{ title: '支持 .xlsx, .xlsm 格式' }"
         >
           添加文件
         </a-button>
@@ -39,6 +43,8 @@
             <a-menu @click="handleMoreAction">
               <a-menu-item key="paste">从剪贴板读取</a-menu-item>
               <a-menu-item key="clear">清空列表</a-menu-item>
+              <a-menu-divider />
+              <a-menu-item key="help" @click="showHelp">查看帮助</a-menu-item>
             </a-menu>
           </template>
         </a-dropdown>
@@ -46,31 +52,65 @@
     </div>
 
     <!-- 步骤指示器 -->
-    <a-steps :current="currentStep" class="steps">
-      <a-step title="选择待处理文件" />
-      <a-step title="设置处理规则" />
-      <a-step title="设置其它选项" />
-      <a-step title="设置输出目录" />
-      <a-step title="开始处理" />
+    <a-steps
+      :current="currentStep"
+      class="steps"
+      type="navigation"
+      size="small"
+    >
+      <a-step title="选择文件" description="选择待处理的 Excel 文件" />
+      <a-step title="设置规则" description="配置处理规则和选项" />
+      <a-step title="其他选项" description="设置额外参数" />
+      <a-step title="输出设置" description="配置输出选项" />
+      <a-step title="开始处理" description="执行处理任务" />
     </a-steps>
 
     <!-- 信息提示 -->
-    <a-alert
-      v-if="infoMessage"
-      :message="infoMessage"
-      type="info"
-      show-icon
-      class="info-alert"
-    />
+    <div class="messages-container">
+      <a-alert
+        v-if="infoMessage"
+        :message="infoMessage"
+        type="info"
+        show-icon
+        closable
+        @close="$emit('close-info')"
+        class="info-alert"
+      />
+      <a-alert
+        v-if="errorMessage"
+        :message="errorMessage"
+        type="error"
+        show-icon
+        closable
+        @close="$emit('close-error')"
+        class="error-alert"
+      />
+      <a-alert
+        v-if="successMessage"
+        :message="successMessage"
+        type="success"
+        show-icon
+        closable
+        @close="$emit('close-success')"
+        class="success-alert"
+      />
+    </div>
 
     <!-- 文件列表表格 -->
     <div class="file-table-container">
+      <!-- 文件上传提示 -->
+      <div v-if="files.length > 0" class="file-count-tip">
+        <a-tag color="blue">{{ files.length }} 个文件已选择</a-tag>
+        <span class="file-hint">支持拖拽添加更多文件</span>
+      </div>
+
       <a-table
         :columns="columns"
         :data-source="files"
         :pagination="false"
         bordered
         size="small"
+        :row-hoverable="true"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'actions'">
@@ -79,49 +119,82 @@
               size="small"
               @click="handleRemoveFile(record.key)"
               style="color: #ff4d4f"
+              :tooltip="{ title: '删除文件' }"
             >
               删除
             </a-button>
           </template>
+          <template v-else-if="column.key === 'status'">
+            <a-tag
+              :color="
+                record.status === 'success'
+                  ? 'green'
+                  : record.status === 'error'
+                    ? 'red'
+                    : 'blue'
+              "
+            >
+              {{
+                record.status === "success"
+                  ? "已添加"
+                  : record.status === "error"
+                    ? "添加失败"
+                    : "添加中"
+              }}
+            </a-tag>
+          </template>
+        </template>
+        <template #empty>
+          <!-- 拖拽区域 -->
+          <div
+            class="drop-area"
+            :class="{ 'drop-area-hover': dragActive }"
+            @dragover.prevent="dragActive = true"
+            @dragleave.prevent="dragActive = false"
+            @drop.prevent="dragActive = false"
+          >
+            <div class="drop-content">
+              <div class="drop-icon">
+                <a-icon
+                  type="cloud-upload"
+                  :style="{
+                    fontSize: '64px',
+                    color: '#165dff',
+                    transition: 'all 0.3s ease',
+                  }"
+                  :class="{ 'drop-icon-hover': dragActive }"
+                />
+              </div>
+              <p class="drop-title">拖拽文件到此处</p>
+              <p class="drop-subtitle">或</p>
+              <a-button
+                type="primary"
+                icon="plus"
+                @click="handleAddFile"
+                :size="'large'"
+              >
+                选择文件
+              </a-button>
+              <p class="drop-hint">支持 .xlsx, .xlsm 格式文件，可批量添加</p>
+              <p class="drop-warning" v-if="maxFileSize > 0">
+                <a-icon
+                  type="exclamation-circle"
+                  :style="{ marginRight: '4px' }"
+                />单个文件大小限制：{{ formatFileSize(maxFileSize) }}
+              </p>
+            </div>
+          </div>
         </template>
       </a-table>
-
-      <!-- 拖拽区域 -->
-      <div v-if="files.length === 0" class="drop-area">
-        <div class="drop-content">
-          <div class="cross-icon">
-            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-              <line
-                x1="16"
-                y1="32"
-                x2="48"
-                y2="32"
-                stroke="#d9d9d9"
-                stroke-width="2"
-              />
-              <line
-                x1="32"
-                y1="16"
-                x2="32"
-                y2="48"
-                stroke="#d9d9d9"
-                stroke-width="2"
-              />
-            </svg>
-          </div>
-          <p class="drop-text">您可以将待处理内容「拖放」到此处</p>
-          <p class="drop-tip">
-            如果无法拖动，请查看<a href="#" style="color: #165dff">这里</a
-            >或使用右上方「更多」中的从剪贴板自动读取
-          </p>
-        </div>
-      </div>
     </div>
 
     <!-- 底部操作区 -->
     <div class="bottom-bar">
-      <div class="progress-container" v-if="progress > 0">
-        <a-progress :percent="progress" :show-info="false" />
+      <div class="progress-section">
+        <div class="progress-container" v-if="progress > 0">
+          <a-progress :percent="progress" :show-info="true" status="active" />
+          <span class="progress-text">{{ progressText }}</span>
+        </div>
       </div>
       <div class="bottom-buttons">
         <a-button
@@ -138,21 +211,41 @@
           size="large"
           @click="handleNextStep"
           :disabled="files.length === 0 || pyodideLoading"
+          :loading="isProcessing"
         >
-          下一步 <RightOutlined />
+          <template #icon>
+            <a-spin v-if="isProcessing" />
+            <RightOutlined v-else />
+          </template>
+          {{ isProcessing ? "处理中..." : "下一步" }}
         </a-button>
       </div>
     </div>
+
+    <!-- 帮助文档模态框 -->
+    <a-modal
+      v-model:open="helpModalVisible"
+      title="使用帮助"
+      :footer="null"
+      :width="800"
+    >
+      <div class="help-content">
+        <slot name="help-content">
+          <p>该插件的帮助文档正在准备中...</p>
+        </slot>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import {
   DownOutlined,
   LeftOutlined,
   RightOutlined,
+  CloudUploadOutlined,
 } from "@ant-design/icons-vue";
 
 const props = defineProps({
@@ -164,9 +257,33 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  errorMessage: {
+    type: String,
+    default: "",
+  },
+  successMessage: {
+    type: String,
+    default: "",
+  },
   currentStep: {
     type: Number,
     default: 0,
+  },
+  maxFileSize: {
+    type: Number,
+    default: 0, // 0表示无限制
+  },
+  isProcessing: {
+    type: Boolean,
+    default: false,
+  },
+  loadingProgress: {
+    type: Number,
+    default: 0,
+  },
+  progressText: {
+    type: String,
+    default: "",
   },
 });
 
@@ -177,10 +294,16 @@ const emit = defineEmits([
   "next-step",
   "prev-step",
   "remove-file",
+  "close-info",
+  "close-error",
+  "close-success",
+  "show-help",
 ]);
 const files = ref([]);
 const progress = ref(0);
 const pyodideLoading = ref(false);
+const helpModalVisible = ref(false);
+const dragActive = ref(false);
 
 // 对外暴露属性
 defineExpose({
@@ -190,11 +313,11 @@ defineExpose({
 
 const columns = [
   { title: "序号", dataIndex: "index", key: "index", width: 80 },
-  { title: "名称", dataIndex: "name", key: "name" },
-  { title: "路径", dataIndex: "path", key: "path", ellipsis: true },
+  { title: "名称", dataIndex: "name", key: "name", ellipsis: true },
+  { title: "状态", dataIndex: "status", key: "status", width: 120 },
+  { title: "大小", dataIndex: "size", key: "size", width: 100 },
   { title: "扩展名", dataIndex: "extension", key: "extension", width: 100 },
   { title: "创建时间", dataIndex: "createTime", key: "createTime", width: 180 },
-  { title: "修改时间", dataIndex: "modifyTime", key: "modifyTime", width: 180 },
   {
     title: "操作",
     dataIndex: "actions",
@@ -213,7 +336,11 @@ const handleImportFromFolder = () => {
 };
 
 const handleMoreAction = ({ key }) => {
-  emit("more-action", key);
+  if (key === "help") {
+    showHelp();
+  } else {
+    emit("more-action", key);
+  }
 };
 
 const handleRemoveFile = (key) => {
@@ -228,6 +355,20 @@ const handleNextStep = () => {
 const handlePrevStep = () => {
   emit("prev-step");
 };
+
+const showHelp = () => {
+  helpModalVisible.value = true;
+  emit("show-help");
+};
+
+// 格式化文件大小
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
 </script>
 
 <style scoped>
@@ -236,6 +377,7 @@ const handlePrevStep = () => {
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  transition: all 0.3s ease;
 }
 
 /* 顶部操作栏 */
@@ -246,28 +388,52 @@ const handlePrevStep = () => {
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid #f0f0f0;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .plugin-title {
-  font-size: 18px;
-  font-weight: 500;
-  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
   margin: 0;
+  flex: 1;
+  min-width: 200px;
 }
 
 .action-buttons {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* 步骤指示器 */
 .steps {
   margin-bottom: 24px;
+  background: #fafafa;
+  padding: 10px 0;
+  border-radius: 8px;
+}
+
+.steps :deep(.ant-steps-item-title) {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.steps :deep(.ant-steps-item-description) {
+  font-size: 12px;
+  color: #666;
 }
 
 /* 信息提示 */
-.info-alert {
+.messages-container {
   margin-bottom: 20px;
+}
+
+.info-alert,
+.error-alert,
+.success-alert {
+  margin-bottom: 12px;
 }
 
 /* 文件列表表格 */
@@ -275,43 +441,93 @@ const handlePrevStep = () => {
   position: relative;
   min-height: 300px;
   border: 1px solid #e8e8e8;
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+/* 文件上传提示 */
+.file-count-tip {
+  padding: 12px 16px;
+  background: #f0f5ff;
+  border-bottom: 1px solid #e6f0ff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-hint {
+  font-size: 12px;
+  color: #666;
 }
 
 /* 拖拽区域 */
 .drop-area {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 2px dashed #d9d9d9;
-  border-radius: 4px;
-  background: #fafafa;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  padding: 60px 40px;
+  transition: all 0.3s ease;
+  min-height: 300px;
+  cursor: pointer;
+}
+
+.drop-area:hover,
+.drop-area-hover {
+  border-color: #165dff;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.drop-area-hover {
+  border-width: 3px;
+  box-shadow: 0 8px 24px rgba(22, 93, 255, 0.15);
 }
 
 .drop-content {
   text-align: center;
-  padding: 40px;
 }
 
-.cross-icon {
-  margin-bottom: 16px;
+.drop-icon {
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
 }
 
-.drop-text {
-  font-size: 16px;
+.drop-area:hover .drop-icon,
+.drop-icon-hover {
+  transform: scale(1.1) rotate(5deg);
+  filter: brightness(1.1);
+}
+
+.drop-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.drop-subtitle {
+  font-size: 14px;
   color: #666;
-  margin-bottom: 8px;
+  margin-bottom: 24px;
 }
 
-.drop-tip {
+.drop-hint {
   font-size: 12px;
   color: #999;
+  margin-top: 20px;
+}
+
+.drop-warning {
+  font-size: 12px;
+  color: #faad14;
+  margin-top: 8px;
 }
 
 /* 底部操作区 */
@@ -320,13 +536,30 @@ const handlePrevStep = () => {
   justify-content: space-between;
   align-items: center;
   margin-top: 24px;
-  padding-top: 16px;
+  padding-top: 20px;
   border-top: 1px solid #f0f0f0;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.progress-section {
+  flex: 1;
+  min-width: 200px;
 }
 
 .progress-container {
-  flex: 1;
-  margin-right: 20px;
+  margin-bottom: 8px;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.bottom-buttons {
+  display: flex;
+  gap: 16px;
 }
 
 /* Pyodide 加载遮罩层 */
@@ -336,26 +569,161 @@ const handlePrevStep = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
 }
 
 .loading-content {
   text-align: center;
-  padding: 40px;
+  padding: 50px;
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  animation: fadeIn 0.3s ease;
+}
+
+.loading-progress {
+  margin-top: 20px;
+  width: 100%;
 }
 
 .loading-subtitle {
   margin-top: 16px;
   color: #666;
   font-size: 14px;
-  max-width: 300px;
+  line-height: 1.5;
+}
+
+/* 帮助文档 */
+.help-content {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.help-content h1,
+.help-content h2,
+.help-content h3 {
+  margin: 16px 0 12px 0;
+  color: #1a1a1a;
+}
+
+.help-content h1 {
+  font-size: 20px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.help-content h2 {
+  font-size: 18px;
+}
+
+.help-content h3 {
+  font-size: 16px;
+}
+
+.help-content p {
+  margin: 8px 0;
+  line-height: 1.6;
+  color: #444;
+}
+
+.help-content ul,
+.help-content ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.help-content li {
+  margin: 4px 0;
+  line-height: 1.5;
+  color: #444;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .plugin-template {
+    padding: 16px;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .plugin-title {
+    font-size: 18px;
+  }
+
+  .action-buttons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .bottom-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bottom-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .drop-area {
+    padding: 40px 20px;
+  }
+
+  .drop-title {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .plugin-template {
+    padding: 12px;
+  }
+
+  .steps :deep(.ant-steps-item) {
+    margin-right: 8px;
+  }
+
+  .steps :deep(.ant-steps-item-title) {
+    font-size: 12px;
+  }
+
+  .steps :deep(.ant-steps-item-description) {
+    display: none;
+  }
+
+  .file-table-container {
+    min-height: 200px;
+  }
+
+  .bottom-buttons {
+    flex-direction: column;
+  }
+
+  .bottom-buttons button {
+    width: 100%;
+  }
 }
 </style>

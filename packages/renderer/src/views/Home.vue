@@ -27,7 +27,9 @@
     <!-- 插件分类标题 -->
     <div class="category-section">
       <h2 class="category-title">{{ categoryTitle }}</h2>
-      <span class="plugin-count">{{ filteredPlugins.length }} 个工具</span>
+      <span class="plugin-count"
+        >{{ filteredPlugins?.length || 0 }} 个工具</span
+      >
     </div>
 
     <!-- 插件网格 -->
@@ -144,10 +146,18 @@ onMounted(() => {
       hot: true,
     },
     {
-      key: "remove-empty-row",
+      key: "delete-empty-row",
       name: "删除 Excel 空白内容",
       icon: "/asset/execl_icon00.png",
       description: "删除 Excel 空白内容（空白工作表、空白行列等）",
+      category: "content",
+      hot: true,
+    },
+    {
+      key: "remove-empty-row",
+      name: "移除 Excel 空行",
+      icon: "/asset/execl_icon00.png",
+      description: "移除 Excel 文件中的空行，清理数据",
       category: "content",
       hot: true,
     },
@@ -181,6 +191,97 @@ onMounted(() => {
       icon: "/asset/execl_icon00_3.png",
       description: "批量合并多个Excel文件的内容到一个文件中",
       category: "merge",
+      hot: true,
+    },
+    {
+      key: "split-excel",
+      name: "拆分Excel文件",
+      icon: "/asset/execl_icon00_3.png",
+      description: "将一个Excel文件拆分为多个文件，支持按工作表或行数拆分",
+      category: "merge",
+      hot: true,
+    },
+    {
+      key: "split-csv",
+      name: "拆分CSV文件",
+      icon: "/asset/execl_icon00_3.png",
+      description: "将大型CSV文件拆分为多个小文件，便于处理",
+      category: "merge",
+      hot: true,
+    },
+    {
+      key: "extract-content",
+      name: "提取 Excel 中的指定内容",
+      icon: "/asset/execl_icon00.png",
+      description: "从Excel文档中提取指定内容，支持按列、按行或按条件提取",
+      category: "extract",
+      hot: true,
+    },
+    {
+      key: "extract-images",
+      name: "提取 Excel 中的图片",
+      icon: "/asset/execl_icon00.png",
+      description: "从Excel文档中提取所有图片，保存为单独文件",
+      category: "extract",
+      hot: true,
+    },
+    {
+      key: "convert-format",
+      name: "转换 Excel 格式",
+      icon: "/asset/execl_icon00.png",
+      description: "将Excel文件转换为不同格式，如xlsx转csv、xls等",
+      category: "format",
+      hot: true,
+    },
+    {
+      key: "delete-macro",
+      name: "删除 Excel 宏",
+      icon: "/asset/execl_icon00.png",
+      description: "删除Excel文件中的宏代码，提高文件安全性",
+      category: "format",
+      hot: true,
+    },
+    {
+      key: "add-header-footer",
+      name: "添加/修改 Excel 页眉页脚",
+      icon: "/asset/execl_icon00.png",
+      description: "为 Excel 文件批量添加或修改页眉页脚，支持自定义内容和样式",
+      category: "header",
+      hot: true,
+    },
+    {
+      key: "delete-header-footer",
+      name: "删除 Excel 页眉页脚",
+      icon: "/asset/execl_icon00.png",
+      description: "为 Excel 文件批量删除页眉页脚，支持指定工作表",
+      category: "header",
+      hot: true,
+    },
+    {
+      key: "add-watermark",
+      name: "添加 Excel 文字水印",
+      icon: "/asset/execl_icon00.png",
+      description:
+        "为 Excel 文件批量添加文字水印，支持自定义内容、样式、位置和透明度",
+      category: "watermark",
+      hot: true,
+    },
+    {
+      key: "rename-sheets",
+      name: "重命名 Excel 工作表",
+      icon: "/asset/execl_icon00.png",
+      description:
+        "为 Excel 文件批量重命名工作表，支持自定义命名规则和批量处理",
+      category: "sheet",
+      hot: true,
+    },
+    {
+      key: "update-file-properties",
+      name: "修改 Excel 文件属性",
+      icon: "/asset/execl_icon00.png",
+      description:
+        "为 Excel 文件批量修改文件属性，支持标题、作者、主题、关键词等元数据",
+      category: "property",
       hot: true,
     },
   ];

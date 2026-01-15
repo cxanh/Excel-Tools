@@ -21,8 +21,8 @@ def process(data):
     # 解析输入数据
     file_content = data['file']
     file_name = data['fileName']
-    settings = data.get('settings', None)
-    replacement_rules = settings.get('replacementRules', [])
+    settings = data.get('settings', {}) or {}
+    replacement_rules = settings.get('replacementRules', []) if settings else []
     
     logs = []
     
@@ -82,6 +82,7 @@ def process(data):
                     logs.append(f"警告: 未找到以下工作表: {', '.join(missing_sheets)}，将只处理找到的工作表")
         
         total_replacements = 0
+        total_cells_processed = 0
         
         # 遍历需要处理的工作表
         for sheet_name in sheets_to_process:
@@ -312,11 +313,12 @@ def process(data):
             logs.append(f"    - 处理单元格数量: {cells_processed}")
             logs.append(f"    - 成功替换: {sheet_replacements} 处内容")
             total_replacements += sheet_replacements
+            total_cells_processed += cells_processed
         
         # 处理完成总结
         logs.append(f"\n=== 处理完成总结 ===")
         logs.append(f"总工作表数: {len(sheets_to_process)}")
-        logs.append(f"总处理单元格: {sum(1 for _ in range(start_row, end_row + 1) for __ in range(start_col, end_col + 1)) * len(sheets_to_process)}")
+        logs.append(f"总处理单元格: {total_cells_processed}")
         logs.append(f"总替换次数: {total_replacements}")
         logs.append(f"使用的有效规则数: {len(valid_rules)}")
         logs.append(f"==================")
@@ -331,11 +333,13 @@ def process(data):
                 'success': True,
                 'buffer': output.read(),
                 'logs': logs,
-                'statistics': {
-                    'totalSheets': len(sheets_to_process),
-                    'totalCells': sum(1 for _ in range(start_row, end_row + 1) for __ in range(start_col, end_col + 1)) * len(sheets_to_process),
-                    'totalReplacements': total_replacements,
-                    'validRules': len(valid_rules)
+                'details': {
+                    'statistics': {
+                        'totalSheets': len(sheets_to_process),
+                        'totalCells': total_cells_processed,
+                        'totalReplacements': total_replacements,
+                        'validRules': len(valid_rules)
+                    }
                 }
             }
         except Exception as e:

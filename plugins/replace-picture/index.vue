@@ -436,10 +436,13 @@ const processFiles = async () => {
 
       // 构建处理数据对象
       const processingData = {
-        excelFile: fileItem.file,
-        replaceImage: imageBuffer,
-        imageFileName: imageFile.value.name,
-        settings: settings.value,
+        type: "other",
+        data: {
+          excelFile: fileItem.file,
+          replaceImage: imageBuffer,
+          imageFileName: imageFile.value.name,
+          settings: settings.value,
+        },
       };
 
       const result = await runPy(script, processingData);

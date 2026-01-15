@@ -1,0 +1,14 @@
+{
+  "name": "update-file-properties",
+  "title": "修改 Excel 文件属性",
+  "description": "为 Excel 文件批量修改文件属性，支持标题、作者、主题、关键词等元数据",
+  "version": "1.0.0",
+  "author": "",
+  "category": "property",
+  "icon": "/asset/execl_icon00.png",
+  "keywords": ["excel", "properties", "metadata", "批量"],
+  "dependencies": ["openpyxl"],
+  "supportedFormats": ["xlsx", "xlsm"],
+  "entry": "index.vue",
+  "worker": "worker.py"
+}

@@ -422,7 +422,12 @@ const processFiles = async () => {
       logs.value.push(`设置参数：${JSON.stringify(settings.value)}`);
 
       // 传递设置参数给Python脚本
-      const result = await runPy(script, fileItem.file);
+      const result = await runPy(script, {
+        type: "single",
+        file: fileItem.file,
+        fileName: fileItem.name,
+        settings: settings.value,
+      });
       progress.value = 30 + Math.round(((i + 1) / files.value.length) * 50);
 
       logs.value.push(`${fileItem.name} 处理完成！`);

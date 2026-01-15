@@ -1,0 +1,14 @@
+{
+  "name": "add-header-footer",
+  "title": "添加/修改 Excel 页眉页脚",
+  "description": "为 Excel 文件批量添加或修改页眉页脚，支持自定义内容和样式",
+  "version": "1.0.0",
+  "author": "",
+  "category": "header",
+  "icon": "/asset/execl_icon00.png",
+  "keywords": ["excel", "header", "footer", "批量"],
+  "dependencies": ["openpyxl"],
+  "supportedFormats": ["xlsx", "xlsm"],
+  "entry": "index.vue",
+  "worker": "worker.py"
+}

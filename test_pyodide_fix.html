@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pyodide 版本修复测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        .info { background: #e3f2fd; color: #1565c0; }
+    </style>
+</head>
+<body>
+    <h1>Pyodide 版本修复测试</h1>
+    <button onclick="testPyodideLoad()">测试 Pyodide 加载</button>
+    <div id="logs"></div>
+
+    <script type="module">
+        import { loadPyodide } from './node_modules/pyodide/pyodide.mjs';
+
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.appendChild(div);
+            console.log(message);
+        }
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('./public/pyodide-config.json');
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (error) {
+                log(`无法加载配置文件: ${error.message}`, 'error');
+            }
+            return {
+                version: "0.24.1",
+                cdnIndexURL: "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/"
+            };
+        }
+
+        window.testPyodideLoad = async function() {
+            try {
+                log('开始测试 Pyodide 加载...', 'info');
+                
+                const config = await loadConfig();
+                log(`使用配置版本: ${config.version}`, 'info');
+                log(`CDN URL: ${config.cdnIndexURL}`, 'info');
+
+                const pyodide = await loadPyodide({
+                    indexURL: config.cdnIndexURL,
+                    onDownloadProgress: (progress) => {
+                        const percent = Math.round((progress.loaded / (progress.total || 1)) * 100);
+                        log(`下载进度: ${percent}%`, 'info');
+                    }
+                });
+
+                log('Pyodide 加载成功！', 'success');
+                log(`Python 版本: ${pyodide.runPython('import sys; sys.version')}`, 'success');
+                
+                // 测试简单的Python代码
+                const result = pyodide.runPython(`
+                    import json
+                    data = {"test": "success", "version": "0.24.1"}
+                    json.dumps(data)
+                `);
+                log(`Python 测试结果: ${result}`, 'success');
+
+            } catch (error) {
+                log(`Pyodide 加载失败: ${error.message}`, 'error');
+                console.error('详细错误:', error);
+            }
+        };
+    </script>
+</body>
+</html>

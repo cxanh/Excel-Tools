@@ -347,6 +347,7 @@ const processFiles = async () => {
 
       // 构建处理数据对象
       const processingData = {
+        type: "single",
         file: new Uint8Array(fileContent),
         fileName: file.name,
         settings: settings.value,

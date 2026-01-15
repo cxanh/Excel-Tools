@@ -1,0 +1,7 @@
+{
+  "key": "delete-empty-row",
+  "name": "删除 Excel 空白内容",
+  "icon": "delete",
+  "description": "删除 Excel 空白内容（空白工作表、空白行列等）",
+  "category": "content"
+}

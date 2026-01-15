@@ -1,0 +1,14 @@
+{
+  "name": "delete-header-footer",
+  "title": "删除 Excel 页眉页脚",
+  "description": "为 Excel 文件批量删除页眉页脚，支持指定工作表",
+  "version": "1.0.0",
+  "author": "",
+  "category": "header",
+  "icon": "/asset/execl_icon00.png",
+  "keywords": ["excel", "header", "footer", "批量", "删除"],
+  "dependencies": ["openpyxl"],
+  "supportedFormats": ["xlsx", "xlsm"],
+  "entry": "index.vue",
+  "worker": "worker.py"
+}

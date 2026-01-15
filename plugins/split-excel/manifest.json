@@ -1,0 +1,7 @@
+{
+  "key": "split-excel",
+  "name": "Excel 拆分成多个文件",
+  "icon": "appstore",
+  "description": "将一个Excel文件根据指定条件拆分成多个Excel文件",
+  "category": "合并拆分"
+}
