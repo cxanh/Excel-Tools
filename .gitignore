@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+python-backend/__pycache__/
+python-backend/*.pyc
+python-backend/.pytest_cache/
+
+# Build outputs
+dist/
+dist-electron/
+python-dist/
+*.egg-info/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python virtual environment
+venv/
+env/
+ENV/
+
+# Backup files
+.backup/
+*.backup
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
