@@ -55,12 +55,18 @@
       <a-layout-sider
         width="220"
         style="background: #fff; border-right: 1px solid #f0f0f0"
+        :class="{ collapsed: false }"
       >
         <a-menu
           mode="inline"
-          :default-selected-keys="['excel']"
+          :default-selected-keys="['home']"
+          :open-keys="openKeys"
           :items="sidebarItems"
           @select="handleSidebarSelect"
+          @open-change="handleOpenChange"
+          :menu-transition-name="'slide-up'"
+          :sub-menu-close-delay="0.2"
+          :sub-menu-open-delay="0"
         />
       </a-layout-sider>
 
@@ -79,66 +85,147 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import SettingsModal from "./components/SettingsModal.vue";
 import { SettingOutlined, BellOutlined } from "@ant-design/icons-vue";
 
 const router = useRouter();
+const route = useRoute();
 const sidebarItems = ref([]);
 const showSettingsModal = ref(false);
+const openKeys = ref(["excel"]);
+
+// 从本地存储加载展开状态
+const loadOpenKeys = () => {
+  const savedOpenKeys = localStorage.getItem("excelbox_openKeys");
+  if (savedOpenKeys) {
+    try {
+      const parsedKeys = JSON.parse(savedOpenKeys);
+      // 确保excel始终在openKeys中，因为它不应该被折叠
+      if (!parsedKeys.includes("excel")) {
+        parsedKeys.push("excel");
+      }
+      openKeys.value = parsedKeys;
+    } catch (e) {
+      console.error("Failed to parse saved open keys:", e);
+    }
+  }
+};
+
+// 保存展开状态到本地存储
+const saveOpenKeys = (keys) => {
+  localStorage.setItem("excelbox_openKeys", JSON.stringify(keys));
+};
 
 // 侧边栏菜单数据
 onMounted(() => {
+  // 加载保存的展开状态
+  loadOpenKeys();
+
   sidebarItems.value = [
     { key: "home", icon: "home", label: "首页" },
     {
       key: "excel",
       icon: "file-excel",
       label: "Excel 工具",
+      // 确保excel菜单项始终展开
+      defaultOpen: true,
       children: [
         // 文件内容分类插件
         {
           key: "content-category",
           icon: "edit",
           label: "文件内容",
+          // 添加具体功能子项
+          children: [
+            { key: "replace-content", label: "按规则修改内容" },
+            { key: "import-rules", label: "导入规则修改内容" },
+            { key: "generate-from-template", label: "根据模板生成" },
+            { key: "replace-picture", label: "替换图片" },
+            { key: "delete-pictures", label: "删除图片" },
+            { key: "delete-empty-row", label: "删除空白内容" },
+            { key: "remove-empty-row", label: "移除空行" },
+            { key: "delete-formula", label: "删除公式" },
+            { key: "delete-duplicate-rows", label: "删除重复行" },
+            { key: "url-to-image", label: "URL转图片" },
+          ],
         },
         // 合并拆分分类插件
         {
           key: "merge-category",
           icon: "merge-cells",
           label: "合并拆分",
+          children: [
+            { key: "merge-excel", label: "合并Excel" },
+            { key: "split-excel", label: "拆分Excel" },
+            { key: "split-csv", label: "拆分CSV" },
+          ],
         },
-        // 其他分类（暂时为空，后续可扩展）
+        // 格式转换分类
         {
           key: "format-category",
           icon: "format-painter",
           label: "格式转换",
+          children: [
+            { key: "convert-format", label: "转换格式" },
+            { key: "delete-macro", label: "删除宏" },
+          ],
         },
+        // 页眉页脚分类
         {
           key: "header-category",
           icon: "header",
           label: "页眉页脚",
+          children: [
+            { key: "add-header-footer", label: "添加/修改页眉页脚" },
+            { key: "delete-header-footer", label: "删除页眉页脚" },
+          ],
         },
+        // 文件水印分类
         {
           key: "watermark-category",
           icon: "copyright",
           label: "文件水印",
+          children: [{ key: "add-watermark", label: "添加文字水印" }],
         },
+        // 工作表处理分类
         {
           key: "sheet-category",
           icon: "table",
           label: "工作表处理",
+          children: [{ key: "rename-sheets", label: "重命名工作表" }],
         },
+        // 数据提取分类
         {
           key: "extract-category",
           icon: "database",
           label: "数据提取",
+          children: [
+            { key: "extract-content", label: "提取指定内容" },
+            { key: "extract-images", label: "提取图片" },
+          ],
         },
+        // 文件属性分类
         {
           key: "property-category",
           icon: "info-circle",
           label: "文件属性",
+          children: [{ key: "update-file-properties", label: "修改文件属性" }],
+        },
+        // 新增功能分类
+        {
+          key: "new-features-category",
+          icon: "star",
+          label: "新增功能",
+          children: [
+            { key: "sort-data", label: "排序数据" },
+            { key: "filter-data", label: "筛选数据" },
+            { key: "add-formula", label: "批量添加公式" },
+            { key: "batch-rename", label: "批量重命名文件" },
+            { key: "compare-files", label: "比较文件差异" },
+            { key: "batch-encrypt", label: "批量加密文件" },
+          ],
         },
       ],
     },
@@ -158,6 +245,14 @@ const handleSidebarSelect = ({ key }) => {
     // 如果是具体插件，直接跳转到插件页面
     router.push(`/plugin/${key}`);
   }
+};
+
+const handleOpenChange = (keys) => {
+  // 确保excel始终在openKeys中，因为它不应该被折叠
+  const newOpenKeys = keys.filter((key) => key !== "excel");
+  openKeys.value = ["excel", ...newOpenKeys];
+  // 保存展开状态
+  saveOpenKeys(openKeys.value);
 };
 
 // 处理设置保存
@@ -279,5 +374,60 @@ const handleSettingsSave = (settings) => {
   background-color: #999;
   width: 12px;
   height: 2px;
+}
+
+/* 去除折叠按钮 */
+:deep(.ant-menu-submenu-arrow) {
+  display: none !important;
+}
+
+/* 调整子菜单样式 */
+:deep(.ant-menu-submenu-title) {
+  padding-right: 16px !important;
+}
+
+/* 动画效果 */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.slide-up-enter-to,
+.slide-up-leave-from {
+  max-height: 1000px;
+  overflow: hidden;
+  opacity: 1;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  :deep(.ant-layout-sider) {
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+  }
+
+  :deep(.ant-menu-item) {
+    font-size: 12px;
+  }
+
+  :deep(.ant-menu-submenu-title) {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  :deep(.ant-layout-sider) {
+    width: 160px !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+  }
 }
 </style>

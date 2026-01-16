@@ -1,4 +1,4 @@
-import{P as M}from"./PluginTemplate-Bk8KtKqf.js";import{r as S}from"./py-lgh_vU0b.js";import{g as y}from"./plugin-DiTjGwyF.js";import{_ as V,r as p,m as j,b as d,h as F,d as h,w as s,g,e as n,i as f,c as A,F as B,j as C,t as I}from"./index-tMO3H4K7.js";const L={class:"plugin-content"},O={class:"settings-section"},H={__name:"index",setup(J){const m=p(1),l=p(null),u=p("csv"),v=p(""),_=p([]);j(()=>{var t;return(t=l.value)==null?void 0:t.files},async t=>{t&&t.length>0&&await x(t[0])},{deep:!0});const x=async t=>{try{if(!await y("convert-format"))return;const a=await S(`
+import{P as M}from"./PluginTemplate-CSzU_o8L.js";import{r as S}from"./py-Dmvp32T8.js";import{g as y}from"./plugin-DiTjGwyF.js";import{_ as V,r as p,m as j,b as d,h as F,d as h,w as s,g,e as n,i as f,c as A,F as B,j as C,t as I}from"./index-ArcfRATZ.js";const L={class:"plugin-content"},O={class:"settings-section"},H={__name:"index",setup(J){const m=p(1),l=p(null),u=p("csv"),v=p(""),_=p([]);j(()=>{var t;return(t=l.value)==null?void 0:t.files},async t=>{t&&t.length>0&&await x(t[0])},{deep:!0});const x=async t=>{try{if(!await y("convert-format"))return;const a=await S(`
 import io
 import openpyxl
 
