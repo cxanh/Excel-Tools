@@ -169,6 +169,7 @@ def replace_in_sheet(sheet, rule):
 
 
 # 主函数，处理命令行参数
+# 注意：在Pyodide环境中，__name__ != '__main__'，所以这段测试代码不会执行
 if __name__ == '__main__':
     import sys
     import json

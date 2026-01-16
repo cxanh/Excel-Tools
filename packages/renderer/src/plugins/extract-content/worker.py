@@ -216,6 +216,7 @@ def check_condition(cell_value, condition_value, condition_type):
 
 
 # 主函数，处理命令行参数
+# 注意：在Pyodide环境中，__name__ != '__main__'，所以这段测试代码不会执行
 if __name__ == '__main__':
     import sys
     import json

@@ -129,7 +129,9 @@ function safeStringify(value: any): string {
 
   if (typeof value === "string") {
     // 过滤字符串中的内存地址
-    return value.replace(/0x[0-9a-fA-F]+/g, "[内存地址]");
+    return value
+      .replace(/0x[0-9a-fA-F]+/g, "[内存地址]")
+      .replace(/\[\s*0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s*\]/g, "[内存地址]");
   }
 
   if (typeof value === "object") {
@@ -139,10 +141,14 @@ function safeStringify(value: any): string {
         return safeStringify(value.message);
       }
       // 转换为 JSON 字符串
-      return JSON.stringify(value).replace(/0x[0-9a-fA-F]+/g, "[内存地址]");
+      return JSON.stringify(value)
+        .replace(/0x[0-9a-fA-F]+/g, "[内存地址]")
+        .replace(/\[\s*0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s*\]/g, "[内存地址]");
     } catch (e) {
       // 如果 JSON 转换失败，使用 toString
-      return String(value).replace(/0x[0-9a-fA-F]+/g, "[内存地址]");
+      return String(value)
+        .replace(/0x[0-9a-fA-F]+/g, "[内存地址]")
+        .replace(/\[\s*0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s*\]/g, "[内存地址]");
     }
   }
 
@@ -630,6 +636,8 @@ async function doRunPy(
       } else if (errorMessage.includes("FileNotFoundError")) {
         errorCategory = "文件未找到错误";
         logs.push("错误详情: 无法找到指定的文件，请检查文件路径是否正确");
+        // 添加额外的错误处理建议
+        logs.push("提示: 这可能是Pyodide内部测试导致的错误，请重试操作");
       } else if (errorMessage.includes("PermissionError")) {
         errorCategory = "权限错误";
         logs.push("错误详情: 没有足够的权限访问文件，请检查文件权限设置");
@@ -642,6 +650,9 @@ async function doRunPy(
       } else if (errorMessage.includes("SyntaxError")) {
         errorCategory = "语法错误";
         logs.push("错误详情: Python 脚本语法错误，请检查脚本代码");
+        logs.push(
+          "提示: 建议先在小文件上测试脚本，确保语法正确后再处理大型文件",
+        );
       }
 
       // 记录错误类型

@@ -359,7 +359,7 @@ npm run electron:build
 {
   "version": "0.24.1",
   "loadMode": "cdn",
-  "localIndexURL": "/pyodide/v0.24.1/full/",
+  "localIndexURL": "/pyodide/v0.24.1/full/", 
   "cdnIndexURL": "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/",
   "fallbackMode": "local",
   "retryAttempts": 3,
