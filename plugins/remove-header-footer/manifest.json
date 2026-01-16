@@ -1,0 +1,11 @@
+{
+  "key": "remove-header-footer",
+  "name": "删除页眉页脚",
+  "version": "1.0.0",
+  "description": "删除Excel文件的页眉页脚，清理打印设置",
+  "author": "Excel Toolbox Team",
+  "category": "formatting",
+  "icon": "DeleteOutlined",
+  "dependencies": ["openpyxl"],
+  "permissions": ["file:read", "file:write"]
+}

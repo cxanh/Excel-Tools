@@ -1,0 +1,9 @@
+{
+  "key": "remove-empty-row",
+  "name": "删除空白行",
+  "icon": "delete-row",
+  "description": "删除Excel中的所有空白行，保留格式和样式",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl"]
+}

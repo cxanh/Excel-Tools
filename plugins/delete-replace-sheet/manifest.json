@@ -1,0 +1,11 @@
+{
+  "key": "delete-replace-sheet",
+  "name": "删除或替换Sheet",
+  "version": "1.0.0",
+  "description": "删除或替换Excel的工作表",
+  "author": "Excel Toolbox Team",
+  "category": "sheet",
+  "icon": "FileExcelOutlined",
+  "dependencies": ["openpyxl"],
+  "permissions": ["file:read", "file:write"]
+}

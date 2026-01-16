@@ -1,0 +1,9 @@
+{
+  "key": "split-excel",
+  "name": "Excel拆分",
+  "icon": "scissor",
+  "description": "按工作表或按行数拆分Excel文件，保留格式和样式",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl"]
+}

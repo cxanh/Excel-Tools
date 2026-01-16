@@ -1,0 +1,11 @@
+{
+  "key": "manage-protection",
+  "name": "添加或删除保护",
+  "version": "1.0.0",
+  "description": "添加或删除Excel的保护设置",
+  "author": "Excel Toolbox Team",
+  "category": "security",
+  "icon": "LockOutlined",
+  "dependencies": ["openpyxl"],
+  "permissions": ["file:read", "file:write"]
+}

@@ -1,0 +1,9 @@
+{
+  "key": "remove-image",
+  "name": "删除Excel图片",
+  "icon": "picture",
+  "description": "删除Excel文件中的所有图片，减小文件大小",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl"]
+}

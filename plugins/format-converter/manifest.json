@@ -1,0 +1,9 @@
+{
+  "key": "format-converter",
+  "name": "Excel格式转换",
+  "icon": "swap",
+  "description": "将Excel文件转换为CSV、HTML或JSON格式",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl", "pandas"]
+}

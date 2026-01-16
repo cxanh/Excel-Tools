@@ -1,0 +1,9 @@
+{
+  "key": "import-rules",
+  "name": "导入规则修改内容",
+  "icon": "import",
+  "description": "从文件导入批量修改规则并应用到Excel，支持JSON和CSV格式",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl", "pandas"]
+}

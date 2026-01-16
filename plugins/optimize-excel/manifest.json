@@ -1,0 +1,11 @@
+{
+  "key": "optimize-excel",
+  "name": "Excel优化与压缩",
+  "version": "1.0.0",
+  "description": "优化和压缩Excel文件，减小文件大小",
+  "author": "Excel Toolbox Team",
+  "category": "optimization",
+  "icon": "CompressOutlined",
+  "dependencies": ["openpyxl", "Pillow"],
+  "permissions": ["file:read", "file:write"]
+}

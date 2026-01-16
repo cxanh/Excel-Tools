@@ -1,0 +1,11 @@
+{
+  "key": "clear-metadata",
+  "name": "清空文档元数据",
+  "version": "1.0.0",
+  "description": "清空Excel的元数据，保护隐私信息",
+  "author": "Excel Toolbox Team",
+  "category": "metadata",
+  "icon": "DeleteOutlined",
+  "dependencies": ["openpyxl"],
+  "permissions": ["file:read", "file:write"]
+}

@@ -1,0 +1,11 @@
+{
+  "key": "set-header-footer",
+  "name": "设置页眉页脚",
+  "version": "1.0.0",
+  "description": "批量设置Excel的页眉页脚，支持文本、页码、日期等元素",
+  "author": "Excel Toolbox Team",
+  "category": "formatting",
+  "icon": "FileTextOutlined",
+  "dependencies": ["openpyxl"],
+  "permissions": ["file:read", "file:write"]
+}

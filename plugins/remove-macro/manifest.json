@@ -1,0 +1,9 @@
+{
+  "key": "remove-macro",
+  "name": "删除Excel宏",
+  "icon": "code",
+  "description": "删除Excel文件中的所有VBA宏代码，生成安全的无宏文件",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl"]
+}

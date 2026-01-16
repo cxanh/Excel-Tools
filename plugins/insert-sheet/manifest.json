@@ -1,0 +1,11 @@
+{
+  "key": "insert-sheet",
+  "name": "插入Sheet",
+  "version": "1.0.0",
+  "description": "在Excel的指定位置插入新工作表",
+  "author": "Excel Toolbox Team",
+  "category": "sheet",
+  "icon": "FileAddOutlined",
+  "dependencies": ["openpyxl"],
+  "permissions": ["file:read", "file:write"]
+}

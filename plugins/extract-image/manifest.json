@@ -1,0 +1,9 @@
+{
+  "key": "extract-image",
+  "name": "提取图片",
+  "icon": "picture",
+  "description": "从Excel文件中提取所有图片并保存为独立的图片文件",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl", "Pillow"]
+}

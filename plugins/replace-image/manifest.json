@@ -1,0 +1,9 @@
+{
+  "key": "replace-image",
+  "name": "替换图片",
+  "icon": "swap",
+  "description": "将Excel中的所有图片替换为指定的新图片，保持位置和大小",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl", "Pillow"]
+}

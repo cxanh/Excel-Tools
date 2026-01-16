@@ -1,0 +1,9 @@
+{
+  "key": "remove-duplicate-row",
+  "name": "删除重复行",
+  "icon": "delete",
+  "description": "识别并删除Excel中的重复数据行，支持全行比较和指定列比较",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl"]
+}

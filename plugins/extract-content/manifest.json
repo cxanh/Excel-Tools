@@ -1,0 +1,9 @@
+{
+  "key": "extract-content",
+  "name": "提取指定内容",
+  "icon": "filter",
+  "description": "按条件提取Excel中的特定内容，支持多种筛选条件",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl", "pandas"]
+}

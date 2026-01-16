@@ -1,0 +1,9 @@
+{
+  "key": "generate-from-template",
+  "name": "根据模板生成Excel",
+  "icon": "file-add",
+  "description": "基于Excel模板和数据源批量生成标准化文档",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl", "pandas"]
+}

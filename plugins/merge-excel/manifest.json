@@ -1,0 +1,9 @@
+{
+  "key": "merge-excel",
+  "name": "Excel合并",
+  "icon": "merge-cells",
+  "description": "合并多个Excel文件为一个文件，保留格式和样式",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl"]
+}

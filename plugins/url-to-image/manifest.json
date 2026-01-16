@@ -1,0 +1,9 @@
+{
+  "key": "url-to-image",
+  "name": "图片地址转图片",
+  "icon": "link",
+  "description": "将Excel中的图片URL地址转换为实际的嵌入图片",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl", "Pillow", "requests"]
+}

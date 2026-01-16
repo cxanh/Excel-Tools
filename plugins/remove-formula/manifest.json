@@ -1,0 +1,9 @@
+{
+  "key": "remove-formula",
+  "name": "删除公式",
+  "icon": "function",
+  "description": "删除Excel中的所有公式，保留计算结果值",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl"]
+}

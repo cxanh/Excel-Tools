@@ -1,0 +1,11 @@
+{
+  "key": "add-watermark",
+  "name": "添加水印",
+  "version": "1.0.0",
+  "description": "为Excel添加文本或图片水印，支持自定义样式和透明度",
+  "author": "Excel Toolbox Team",
+  "category": "formatting",
+  "icon": "FileProtectOutlined",
+  "dependencies": ["openpyxl", "Pillow"],
+  "permissions": ["file:read", "file:write"]
+}

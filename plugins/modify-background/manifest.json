@@ -1,0 +1,11 @@
+{
+  "key": "modify-background",
+  "name": "删除或修改背景图片",
+  "version": "1.0.0",
+  "description": "删除或替换Excel工作表的背景图片",
+  "author": "Excel Toolbox Team",
+  "category": "formatting",
+  "icon": "BgColorsOutlined",
+  "dependencies": ["openpyxl", "Pillow"],
+  "permissions": ["file:read", "file:write"]
+}

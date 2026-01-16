@@ -1,0 +1,11 @@
+{
+  "key": "csv-merge",
+  "name": "CSV合并",
+  "version": "1.0.0",
+  "description": "合并多个CSV文件",
+  "author": "Excel Toolbox Team",
+  "category": "csv",
+  "icon": "MergeCellsOutlined",
+  "dependencies": ["pandas"],
+  "permissions": ["file:read", "file:write"]
+}

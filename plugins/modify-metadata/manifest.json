@@ -1,0 +1,11 @@
+{
+  "key": "modify-metadata",
+  "name": "修改文档元数据",
+  "version": "1.0.0",
+  "description": "修改Excel的元数据，更新文档信息",
+  "author": "Excel Toolbox Team",
+  "category": "metadata",
+  "icon": "EditOutlined",
+  "dependencies": ["openpyxl"],
+  "permissions": ["file:read", "file:write"]
+}

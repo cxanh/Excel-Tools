@@ -1,0 +1,11 @@
+{
+  "key": "csv-split",
+  "name": "CSV拆分",
+  "version": "1.0.0",
+  "description": "将大型CSV文件拆分成多个小文件",
+  "author": "Excel Toolbox Team",
+  "category": "csv",
+  "icon": "ScissorOutlined",
+  "dependencies": ["pandas"],
+  "permissions": ["file:read", "file:write"]
+}

@@ -1,0 +1,9 @@
+{
+  "key": "modify-by-rules",
+  "name": "按规则修改内容",
+  "icon": "edit",
+  "description": "根据自定义规则批量替换Excel内容，支持普通文本和正则表达式",
+  "author": "Excel Toolbox Team",
+  "version": "1.0.0",
+  "dependencies": ["openpyxl"]
+}
