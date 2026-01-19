@@ -32,9 +32,51 @@ const pythonBridge = {
 };
 
 /**
+ * Dialog API
+ * 暴露给渲染进程的对话框接口
+ */
+const dialogAPI = {
+  /**
+   * 打开文件选择对话框
+   */
+  openFile: () => ipcRenderer.invoke('dialog:openFile'),
+  
+  /**
+   * 打开多文件选择对话框
+   */
+  openFiles: () => ipcRenderer.invoke('dialog:openFiles'),
+  
+  /**
+   * 打开保存文件对话框
+   */
+  saveFile: (options?: any) => ipcRenderer.invoke('dialog:saveFile', options),
+  
+  /**
+   * 打开文件夹选择对话框
+   */
+  openDirectory: (options?: any) => ipcRenderer.invoke('dialog:openDirectory', options),
+  
+  /**
+   * 显示确认对话框
+   */
+  confirm: (options: any) => ipcRenderer.invoke('dialog:confirm', options),
+  
+  /**
+   * 显示错误对话框
+   */
+  error: (options: any) => ipcRenderer.invoke('dialog:error', options),
+  
+  /**
+   * 显示信息对话框
+   */
+  info: (options: any) => ipcRenderer.invoke('dialog:info', options)
+};
+
+/**
  * 通过 contextBridge 安全地暴露 API 到渲染进程
  */
 contextBridge.exposeInMainWorld('pythonBridge', pythonBridge);
+contextBridge.exposeInMainWorld('dialogAPI', dialogAPI);
 
 /**
  * TypeScript 类型声明
@@ -43,5 +85,6 @@ contextBridge.exposeInMainWorld('pythonBridge', pythonBridge);
 declare global {
   interface Window {
     pythonBridge: typeof pythonBridge;
+    dialogAPI: typeof dialogAPI;
   }
 }

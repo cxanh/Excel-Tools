@@ -19,17 +19,44 @@ def log(message):
 
 
 def send_progress(progress, message="", data=None):
-    """发送进度消息"""
-    import json
-    progress_msg = {
-        "type": "progress",
-        "progress": progress,
-        "message": message
-    }
-    if data:
-        progress_msg["data"] = data
+    """发送进度消息（安全版本，不会抛异常）"""
+    try:
+        import json
+        progress_msg = {
+            "type": "progress",
+            "progress": progress,
+            "message": message
+        }
+        if data:
+            progress_msg["data"] = data
+        
+        print(json.dumps(progress_msg, ensure_ascii=False), flush=True)
+    except Exception as e:
+        # 进度发送失败不应该影响主流程
+        log(f"Failed to send progress: {str(e)}")
+
+
+def send_progress_safe(current, total, stage="processing", message_prefix="正在处理"):
+    """
+    安全的进度发送封装
     
-    print(json.dumps(progress_msg), flush=True)
+    Args:
+        current: 当前进度
+        total: 总数
+        stage: 阶段名称
+        message_prefix: 消息前缀
+    """
+    try:
+        if total <= 0:
+            return
+        
+        # 小表格也至少发送一次
+        if total < 100 or current % max(1, total // 20) == 0 or current == total:
+            progress = min(100, int(current / total * 100))
+            message = f"{message_prefix}第 {current}/{total} 行"
+            send_progress(progress, message)
+    except Exception as e:
+        log(f"send_progress_safe error: {str(e)}")
 
 
 class ContentProcessor:
@@ -41,7 +68,7 @@ class ContentProcessor:
     
     def remove_blank_rows(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        删除空白行
+        删除空白行（稳态版本）
         
         Args:
             params: dict, 包含以下字段：
@@ -70,28 +97,43 @@ class ContentProcessor:
             # 标记要删除的行
             rows_to_delete = []
             
+            # 扫描阶段
             for row_idx in range(1, max_row + 1):
-                # 检查该行是否为空
-                is_blank = True
-                for col_idx in range(1, max_col + 1):
-                    cell_value = worksheet.cell(row_idx, col_idx).value
-                    if cell_value is not None and str(cell_value).strip() != '':
-                        is_blank = False
-                        break
+                try:
+                    # 检查该行是否为空
+                    is_blank = True
+                    for col_idx in range(1, max_col + 1):
+                        cell_value = worksheet.cell(row_idx, col_idx).value
+                        if cell_value is not None and str(cell_value).strip() != '':
+                            is_blank = False
+                            break
+                    
+                    if is_blank:
+                        rows_to_delete.append(row_idx)
+                except Exception as e:
+                    log(f"Error reading row {row_idx}: {str(e)}")
+                    # 读取失败的行跳过，不影响其他行
+                    continue
                 
-                if is_blank:
-                    rows_to_delete.append(row_idx)
-                
-                # 发送进度
-                if row_idx % 100 == 0:
-                    progress = int(row_idx / max_row * 100)
-                    send_progress(progress, f"正在扫描第 {row_idx}/{max_row} 行")
+                # 安全发送进度
+                send_progress_safe(row_idx, max_row, "scan", "正在扫描")
             
-            # 从后往前删除行（避免索引变化）
+            # 删除阶段：从后往前删除（避免索引变化）
             deleted_count = 0
-            for row_idx in reversed(rows_to_delete):
-                worksheet.delete_rows(row_idx, 1)
-                deleted_count += 1
+            total_to_delete = len(rows_to_delete)
+            
+            for idx, row_idx in enumerate(reversed(rows_to_delete)):
+                try:
+                    worksheet.delete_rows(row_idx, 1)
+                    deleted_count += 1
+                except Exception as e:
+                    log(f"Error deleting row {row_idx}: {str(e)}")
+                    # 删除失败的行跳过，不中断整个流程
+                    continue
+                
+                # 安全发送删除进度
+                if total_to_delete > 0:
+                    send_progress_safe(idx + 1, total_to_delete, "delete", "正在删除")
             
             log(f"Removed {deleted_count} blank rows from sheet: {sheet_name}")
             
@@ -108,7 +150,7 @@ class ContentProcessor:
             }
             
         except Exception as e:
-            log(f"Error removing blank rows: {str(e)}")
+            log(f"Unexpected error in remove_blank_rows: {str(e)}")
             return self._error_response(
                 "PROCESS_ERROR",
                 f"删除空白行失败: {str(e)}"
@@ -116,7 +158,7 @@ class ContentProcessor:
     
     def clear_blank_cells(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        清除空白单元格内容（保留结构）
+        清除空白单元格内容（稳态版本）
         
         Args:
             params: dict, 包含以下字段：
@@ -143,16 +185,18 @@ class ContentProcessor:
             cleared_count = 0
             
             for row_idx in range(1, max_row + 1):
-                for col_idx in range(1, max_col + 1):
-                    cell = worksheet.cell(row_idx, col_idx)
-                    if cell.value is not None and str(cell.value).strip() == '':
-                        cell.value = None
-                        cleared_count += 1
+                try:
+                    for col_idx in range(1, max_col + 1):
+                        cell = worksheet.cell(row_idx, col_idx)
+                        if cell.value is not None and str(cell.value).strip() == '':
+                            cell.value = None
+                            cleared_count += 1
+                except Exception as e:
+                    log(f"Error processing row {row_idx}: {str(e)}")
+                    continue
                 
-                # 发送进度
-                if row_idx % 100 == 0:
-                    progress = int(row_idx / max_row * 100)
-                    send_progress(progress, f"正在处理第 {row_idx}/{max_row} 行")
+                # 安全发送进度
+                send_progress_safe(row_idx, max_row, "clear", "正在清除")
             
             log(f"Cleared {cleared_count} blank cells from sheet: {sheet_name}")
             
@@ -167,7 +211,7 @@ class ContentProcessor:
             }
             
         except Exception as e:
-            log(f"Error clearing blank cells: {str(e)}")
+            log(f"Unexpected error in clear_blank_cells: {str(e)}")
             return self._error_response(
                 "PROCESS_ERROR",
                 f"清除空白单元格失败: {str(e)}"
@@ -175,7 +219,7 @@ class ContentProcessor:
     
     def remove_formulas(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        删除公式（保留计算结果值）
+        删除公式（稳态版本）
         
         Args:
             params: dict, 包含以下字段：
@@ -202,21 +246,23 @@ class ContentProcessor:
             formula_count = 0
             
             for row_idx in range(1, max_row + 1):
-                for col_idx in range(1, max_col + 1):
-                    cell = worksheet.cell(row_idx, col_idx)
-                    
-                    # 如果单元格包含公式
-                    if cell.data_type == 'f':
-                        # 保存当前值
-                        current_value = cell.value
-                        # 将公式替换为值
-                        cell.value = current_value
-                        formula_count += 1
+                try:
+                    for col_idx in range(1, max_col + 1):
+                        cell = worksheet.cell(row_idx, col_idx)
+                        
+                        # 如果单元格包含公式
+                        if cell.data_type == 'f':
+                            # 保存当前值
+                            current_value = cell.value
+                            # 将公式替换为值
+                            cell.value = current_value
+                            formula_count += 1
+                except Exception as e:
+                    log(f"Error processing row {row_idx}: {str(e)}")
+                    continue
                 
-                # 发送进度
-                if row_idx % 100 == 0:
-                    progress = int(row_idx / max_row * 100)
-                    send_progress(progress, f"正在处理第 {row_idx}/{max_row} 行")
+                # 安全发送进度
+                send_progress_safe(row_idx, max_row, "formula", "正在处理")
             
             log(f"Removed {formula_count} formulas from sheet: {sheet_name}")
             
@@ -231,7 +277,7 @@ class ContentProcessor:
             }
             
         except Exception as e:
-            log(f"Error removing formulas: {str(e)}")
+            log(f"Unexpected error in remove_formulas: {str(e)}")
             return self._error_response(
                 "PROCESS_ERROR",
                 f"删除公式失败: {str(e)}"
@@ -239,77 +285,90 @@ class ContentProcessor:
     
     def remove_duplicate_rows(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        删除重复行
+        删除重复行（稳态模板）
         
         Args:
-            params: dict, 包含以下字段：
+            params: dict
                 - worksheet: Worksheet 对象（必需）
-                - sheet_name: str, 工作表名称（用于日志）
-                - key_columns: list, 用于判断重复的关键列索引（可选，默认使用所有列）
-                - keep_first: bool, 是否保留第一次出现的行（可选，默认 True）
+                - sheet_name: str，工作表名称（用于日志，默认 'Unknown'）
+                - key_columns: list，用于判断重复的关键列索引（可选，默认所有列）
+                - keep_first: bool，是否保留第一次出现的行（可选，默认 True）
         
         Returns:
-            dict, 处理结果
+            dict, 处理结果（统一 JSON 格式）
         """
         worksheet = params.get('worksheet')
         sheet_name = params.get('sheet_name', 'Unknown')
         key_columns = params.get('key_columns')
         keep_first = params.get('keep_first', True)
-        
+
+        # 必须有 worksheet
         if not worksheet:
             return self._error_response(
                 "MISSING_WORKSHEET",
                 "缺少工作表对象"
             )
-        
+
         try:
             log(f"Removing duplicate rows from sheet: {sheet_name}")
-            
+
             max_row = worksheet.max_row
             max_col = worksheet.max_column
-            
-            # 如果没有指定关键列，使用所有列
+
+            # 默认使用所有列
             if not key_columns:
                 key_columns = list(range(1, max_col + 1))
-            
-            # 记录已见过的行
-            seen_rows: Set[tuple] = set()
-            rows_to_delete = []
-            
+
+            seen_rows: set[tuple] = set()
+            rows_to_delete: list[int] = []
+
+            # 扫描阶段
             for row_idx in range(1, max_row + 1):
-                # 提取关键列的值
-                row_key = tuple(
-                    str(worksheet.cell(row_idx, col_idx).value) if worksheet.cell(row_idx, col_idx).value is not None else ''
-                    for col_idx in key_columns
-                )
-                
+                try:
+                    row_key = tuple(
+                        str(worksheet.cell(row=row_idx, column=col_idx).value or '')
+                        for col_idx in key_columns
+                    )
+                except Exception as e:
+                    log(f"Error reading row {row_idx}: {str(e)}")
+                    row_key = tuple('' for _ in key_columns)  # 异常行当作空行
+
                 if row_key in seen_rows:
-                    # 重复行
                     rows_to_delete.append(row_idx)
                 else:
-                    # 第一次出现
                     seen_rows.add(row_key)
-                
-                # 发送进度
+
+                # 安全发送扫描进度
                 if row_idx % 100 == 0:
-                    progress = int(row_idx / max_row * 50)  # 扫描阶段占 50%
-                    send_progress(progress, f"正在扫描第 {row_idx}/{max_row} 行")
-            
-            # 从后往前删除行
+                    try:
+                        progress = int(row_idx / max_row * 50)  # 扫描阶段占 50%
+                        send_progress(progress, f"正在扫描第 {row_idx}/{max_row} 行")
+                    except Exception as e:
+                        log(f"send_progress error during scan: {str(e)}")
+
+            # 删除阶段
             deleted_count = 0
-            total_to_delete = len(rows_to_delete)
-            
+            total_to_delete = len(rows_to_delete) or 1  # 避免除零
+
             for idx, row_idx in enumerate(reversed(rows_to_delete)):
-                worksheet.delete_rows(row_idx, 1)
-                deleted_count += 1
-                
-                # 发送进度
+                try:
+                    worksheet.delete_rows(row_idx, 1)
+                    deleted_count += 1
+                except Exception as e:
+                    log(f"Error deleting row {row_idx}: {str(e)}")
+                    continue  # 异常行跳过，不中断
+
+                # 安全发送删除进度
                 if idx % 10 == 0:
-                    progress = 50 + int(idx / total_to_delete * 50)  # 删除阶段占 50%
-                    send_progress(progress, f"正在删除第 {idx + 1}/{total_to_delete} 个重复行")
-            
+                    try:
+                        progress = 50 + int(idx / total_to_delete * 50)  # 删除阶段占 50%
+                        send_progress(progress, f"正在删除第 {idx + 1}/{total_to_delete} 个重复行")
+                    except Exception as e:
+                        log(f"send_progress error during delete: {str(e)}")
+
             log(f"Removed {deleted_count} duplicate rows from sheet: {sheet_name}")
-            
+
+            # 返回统一 JSON
             return {
                 "type": "result",
                 "status": "success",
@@ -322,9 +381,9 @@ class ContentProcessor:
                     "key_columns": key_columns
                 }
             }
-            
+
         except Exception as e:
-            log(f"Error removing duplicate rows: {str(e)}")
+            log(f"Unexpected error in remove_duplicate_rows: {str(e)}")
             return self._error_response(
                 "PROCESS_ERROR",
                 f"删除重复行失败: {str(e)}"
@@ -332,7 +391,7 @@ class ContentProcessor:
     
     def replace_content(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        按规则替换内容
+        按规则替换内容（稳态版本）
         
         Args:
             params: dict, 包含以下字段：
@@ -375,6 +434,7 @@ class ContentProcessor:
             replace_count = 0
             
             # 编译正则表达式（如果使用）
+            pattern = None
             if use_regex:
                 flags = 0 if case_sensitive else re.IGNORECASE
                 try:
@@ -386,45 +446,47 @@ class ContentProcessor:
                     )
             
             for row_idx in range(1, max_row + 1):
-                for col_idx in range(1, max_col + 1):
-                    cell = worksheet.cell(row_idx, col_idx)
-                    
-                    if cell.value is None:
-                        continue
-                    
-                    cell_value = str(cell.value)
-                    
-                    # 执行替换
-                    if use_regex:
-                        # 正则表达式替换
-                        new_value = pattern.sub(replace_text, cell_value)
-                        if new_value != cell_value:
-                            cell.value = new_value
-                            replace_count += 1
-                    else:
-                        # 普通文本替换
-                        if whole_word:
-                            # 全词匹配
-                            pattern = r'\b' + re.escape(find_text) + r'\b'
-                            flags = 0 if case_sensitive else re.IGNORECASE
-                            new_value = re.sub(pattern, replace_text, cell_value, flags=flags)
-                        else:
-                            # 普通替换
-                            if case_sensitive:
-                                new_value = cell_value.replace(find_text, replace_text)
-                            else:
-                                # 不区分大小写的替换
-                                pattern = re.compile(re.escape(find_text), re.IGNORECASE)
-                                new_value = pattern.sub(replace_text, cell_value)
+                try:
+                    for col_idx in range(1, max_col + 1):
+                        cell = worksheet.cell(row_idx, col_idx)
                         
-                        if new_value != cell_value:
-                            cell.value = new_value
-                            replace_count += 1
+                        if cell.value is None:
+                            continue
+                        
+                        cell_value = str(cell.value)
+                        
+                        # 执行替换
+                        if use_regex:
+                            # 正则表达式替换
+                            new_value = pattern.sub(replace_text, cell_value)
+                            if new_value != cell_value:
+                                cell.value = new_value
+                                replace_count += 1
+                        else:
+                            # 普通文本替换
+                            if whole_word:
+                                # 全词匹配
+                                word_pattern = r'\b' + re.escape(find_text) + r'\b'
+                                flags = 0 if case_sensitive else re.IGNORECASE
+                                new_value = re.sub(word_pattern, replace_text, cell_value, flags=flags)
+                            else:
+                                # 普通替换
+                                if case_sensitive:
+                                    new_value = cell_value.replace(find_text, replace_text)
+                                else:
+                                    # 不区分大小写的替换
+                                    case_pattern = re.compile(re.escape(find_text), re.IGNORECASE)
+                                    new_value = case_pattern.sub(replace_text, cell_value)
+                            
+                            if new_value != cell_value:
+                                cell.value = new_value
+                                replace_count += 1
+                except Exception as e:
+                    log(f"Error processing cell ({row_idx}, {col_idx}): {str(e)}")
+                    continue
                 
-                # 发送进度
-                if row_idx % 100 == 0:
-                    progress = int(row_idx / max_row * 100)
-                    send_progress(progress, f"正在处理第 {row_idx}/{max_row} 行")
+                # 安全发送进度
+                send_progress_safe(row_idx, max_row, "replace", "正在替换")
             
             log(f"Replaced {replace_count} cells in sheet: {sheet_name}")
             
@@ -444,7 +506,7 @@ class ContentProcessor:
             }
             
         except Exception as e:
-            log(f"Error replacing content: {str(e)}")
+            log(f"Unexpected error in replace_content: {str(e)}")
             return self._error_response(
                 "PROCESS_ERROR",
                 f"替换内容失败: {str(e)}"

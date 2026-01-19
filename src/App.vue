@@ -63,6 +63,20 @@
         <h2 class="view-title">📁 文件管理</h2>
         
         <div class="file-section">
+          <!-- 文件选择按钮 -->
+          <div class="file-select-buttons" style="margin-bottom: 16px;">
+            <Tooltip text="使用系统文件选择器浏览文件" position="bottom">
+              <button 
+                @click="selectFileWithDialog" 
+                :disabled="fileStore.isLoading" 
+                class="btn btn-primary"
+                style="width: 100%;"
+              >
+                📂 浏览文件
+              </button>
+            </Tooltip>
+          </div>
+          
           <!-- 拖拽上传区域 -->
           <FileDropzone
             title="拖拽 Excel 文件到这里"
@@ -105,7 +119,7 @@
               </div>
               <div class="info-item">
                 <span class="label">格式</span>
-                <span class="value">{{ fileStore.loadedFile.file_format.toUpperCase() }}</span>
+                <span class="value">{{ fileStore.loadedFile.file_format?.toUpperCase() || 'XLSX' }}</span>
               </div>
               <div class="info-item">
                 <span class="label">大小</span>
@@ -140,6 +154,13 @@
               </Tooltip>
             </div>
           </div>
+          
+          <!-- 最近文件列表 -->
+          <RecentFilesList 
+            v-if="!fileStore.loadedFile"
+            @file-selected="handleRecentFileSelected"
+            style="margin-top: 24px;"
+          />
         </div>
       </div>
 
@@ -560,6 +581,94 @@
         </div>
       </div>
       
+      <!-- 批量操作视图 -->
+      <div v-if="settingsStore.currentView === 'batch'" class="view-container">
+        <h2 class="view-title">📦 批量操作</h2>
+        
+        <div class="content-section">
+          <!-- 文件选择 -->
+          <div class="operation-card full-width">
+            <div class="card-header">
+              <h3>1. 选择文件</h3>
+            </div>
+            <p class="description">选择要批量处理的 Excel 文件</p>
+            <div class="form-row">
+              <button @click="selectBatchFiles" class="btn btn-secondary">
+                📂 浏览文件
+              </button>
+              <button @click="clearBatchFiles" :disabled="batchFiles.length === 0" class="btn btn-secondary">
+                清除列表
+              </button>
+            </div>
+            <div v-if="batchFiles.length > 0" class="batch-files-list">
+              <div class="batch-files-header">
+                已选择 {{ batchFiles.length }} 个文件
+              </div>
+              <div class="batch-files-items">
+                <div v-for="(file, index) in batchFiles" :key="index" class="batch-file-item">
+                  <span class="file-icon">📄</span>
+                  <span class="file-path">{{ file }}</span>
+                  <button @click="removeBatchFile(index)" class="remove-btn">✕</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 操作选择 -->
+          <div class="operation-card full-width">
+            <div class="card-header">
+              <h3>2. 选择操作</h3>
+            </div>
+            <p class="description">选择要对所有文件执行的操作</p>
+            <div class="form-row">
+              <select v-model="batchOperation" class="form-input">
+                <option value="">请选择操作</option>
+                <optgroup label="内容处理">
+                  <option value="remove_blank_rows">删除空白行</option>
+                  <option value="clear_blank_cells">清除空白单元格</option>
+                  <option value="remove_formulas">删除公式</option>
+                  <option value="remove_duplicate_rows">删除重复行</option>
+                </optgroup>
+                <optgroup label="工作表管理">
+                  <option value="insert_sheet">插入工作表</option>
+                </optgroup>
+              </select>
+            </div>
+            
+            <!-- 操作参数配置 -->
+            <div v-if="batchOperation === 'insert_sheet'" class="operation-params">
+              <h4>参数配置</h4>
+              <div class="form-row">
+                <input 
+                  v-model="batchOperationParams.sheet_name" 
+                  placeholder="工作表名称（可选）" 
+                  class="form-input"
+                />
+                <input 
+                  v-model.number="batchOperationParams.position" 
+                  type="number" 
+                  min="0" 
+                  placeholder="插入位置（0=开头）" 
+                  class="form-input"
+                  style="max-width: 200px;"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <!-- 操作按钮 -->
+          <div class="batch-actions">
+            <button 
+              @click="startBatchProcessing" 
+              :disabled="!canStartBatch || batchStore.isProcessing"
+              class="btn btn-primary btn-large"
+            >
+              开始批量处理
+            </button>
+          </div>
+        </div>
+      </div>
+      
       <!-- 消息日志视图 -->
       <div v-if="settingsStore.currentView === 'logs'" class="view-container">
         <h2 class="view-title">📋 操作日志</h2>
@@ -598,6 +707,41 @@
       @close="showHelpModal = false"
     />
     
+    <!-- 确认对话框 -->
+    <ConfirmDialog
+      v-model:visible="showConfirmDialog"
+      :type="confirmDialogOptions.type"
+      :title="confirmDialogOptions.title"
+      :message="confirmDialogOptions.message"
+      :detail="confirmDialogOptions.detail"
+      :confirm-text="confirmDialogOptions.confirmText"
+      :cancel-text="confirmDialogOptions.cancelText"
+      @confirm="confirmDialogOptions.onConfirm"
+    />
+    
+    <!-- 错误提示 -->
+    <ErrorToast
+      v-model:visible="showErrorToast"
+      :type="errorToastOptions.type"
+      :title="errorToastOptions.title"
+      :message="errorToastOptions.message"
+      :detail="errorToastOptions.detail"
+    />
+    
+    <!-- 批量处理进度 -->
+    <BatchProgress 
+      v-if="batchStore.isProcessing && batchStore.currentTask"
+      :task="batchStore.currentTask"
+      @cancel="cancelBatchProcessing"
+    />
+    
+    <!-- 批量处理结果摘要 -->
+    <BatchSummary 
+      v-if="showBatchSummary && batchStore.currentTask"
+      :task="batchStore.currentTask"
+      @close="closeBatchSummary"
+    />
+    
     <!-- 全局拖拽区域 -->
     <GlobalDropzone @file-dropped="handleGlobalFileDrop" />
   </div>
@@ -609,21 +753,51 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useFileStore } from './stores/fileStore';
 import { useHistoryStore } from './stores/historyStore';
 import { useSettingsStore } from './stores/settingsStore';
+import { useRecentFilesStore } from './stores/recentFilesStore';
+import { useBatchStore } from './stores/batchStore';
 import Tooltip from './components/Tooltip.vue';
 import FileDropzone from './components/FileDropzone.vue';
 import GlobalDropzone from './components/GlobalDropzone.vue';
 import CurrentFileBar from './components/CurrentFileBar.vue';
 import WelcomeGuide from './components/WelcomeGuide.vue';
 import HelpModal from './components/HelpModal.vue';
+import ConfirmDialog from './components/ConfirmDialog.vue';
+import RecentFilesList from './components/RecentFilesList.vue';
+import ErrorToast from './components/ErrorToast.vue';
+import BatchProgress from './components/BatchProgress.vue';
+import BatchSummary from './components/BatchSummary.vue';
 
 // 使用 Pinia stores
 const fileStore = useFileStore();
 const historyStore = useHistoryStore();
 const settingsStore = useSettingsStore();
+const recentFilesStore = useRecentFilesStore();
+const batchStore = useBatchStore();
 
 // 帮助系统状态
 const showWelcomeGuide = ref(false);
 const showHelpModal = ref(false);
+
+// 确认对话框状态
+const showConfirmDialog = ref(false);
+const confirmDialogOptions = ref({
+  type: 'warning' as 'warning' | 'danger' | 'info' | 'question',
+  title: '',
+  message: '',
+  detail: '',
+  confirmText: '确定',
+  cancelText: '取消',
+  onConfirm: () => {}
+});
+
+// 错误提示状态
+const showErrorToast = ref(false);
+const errorToastOptions = ref({
+  type: 'error' as 'error' | 'warning' | 'success' | 'info',
+  title: '',
+  message: '',
+  detail: ''
+});
 
 // 菜单项
 const menuItems = [
@@ -633,6 +807,7 @@ const menuItems = [
   { id: 'sheet', icon: '📄', label: '工作表管理' },
   { id: 'merge', icon: '🔗', label: '合并拆分' },
   { id: 'convert', icon: '🔄', label: '格式转换' },
+  { id: 'batch', icon: '📦', label: '批量操作' },
   { id: 'logs', icon: '📋', label: '操作日志' },
 ];
 
@@ -654,6 +829,16 @@ const insertPosition = ref(0);
 const deleteSheetName = ref('');
 const renameSheetOldName = ref('');
 const renameSheetNewName = ref('');
+
+// 批量处理状态
+const batchFiles = ref<string[]>([]);
+const batchOperation = ref('');
+const batchOperationParams = ref<Record<string, any>>({});
+const showBatchSummary = ref(false);
+// const insertPosition = ref(0);
+// const deleteSheetName = ref('');
+// const renameSheetOldName = ref('');
+// const renameSheetNewName = ref('');
 
 const mergeInputFiles = ref('');
 const mergeOutputFile = ref('');
@@ -754,6 +939,123 @@ function formatFileSize(bytes: number): string {
 }
 
 /**
+ * 使用原生文件对话框选择文件
+ */
+async function selectFileWithDialog() {
+  try {
+    const result = await window.dialogAPI.openFile();
+    if (!result.canceled && result.filePaths.length > 0) {
+      const filePath = result.filePaths[0];
+      fileStore.setFilePath(filePath);
+      historyStore.addLog('info', `已选择文件: ${filePath}`);
+      
+      // 自动加载文件
+      loadFile();
+    }
+  } catch (error) {
+    console.error('打开文件对话框失败:', error);
+    showError('打开失败', '无法打开文件选择对话框');
+  }
+}
+
+/**
+ * 处理最近文件选择
+ */
+function handleRecentFileSelected(file: any) {
+  fileStore.setFilePath(file.path);
+  historyStore.addLog('info', `正在打开最近文件: ${file.name}`);
+  loadFile();
+}
+
+/**
+ * 显示确认对话框
+ */
+function showConfirm(options: {
+  type?: 'warning' | 'danger' | 'info' | 'question'
+  title: string
+  message: string
+  detail?: string
+  confirmText?: string
+  cancelText?: string
+}): Promise<boolean> {
+  return new Promise((resolve) => {
+    confirmDialogOptions.value = {
+      type: options.type || 'warning',
+      title: options.title,
+      message: options.message,
+      detail: options.detail || '',
+      confirmText: options.confirmText || '确定',
+      cancelText: options.cancelText || '取消',
+      onConfirm: () => {
+        showConfirmDialog.value = false;
+        resolve(true);
+      }
+    };
+    showConfirmDialog.value = true;
+    
+    // 设置一个标志来处理取消
+    const originalValue = showConfirmDialog.value;
+    setTimeout(() => {
+      if (!showConfirmDialog.value && originalValue) {
+        resolve(false);
+      }
+    }, 100);
+  });
+}
+
+/**
+ * 显示错误提示
+ */
+function showError(title: string, message: string, detail?: string) {
+  errorToastOptions.value = {
+    type: 'error',
+    title,
+    message,
+    detail: detail || ''
+  };
+  showErrorToast.value = true;
+}
+
+/**
+ * 显示成功提示
+ */
+function showSuccess(title: string, message: string, detail?: string) {
+  errorToastOptions.value = {
+    type: 'success',
+    title,
+    message,
+    detail: detail || ''
+  };
+  showErrorToast.value = true;
+}
+
+/**
+ * 显示警告提示
+ */
+function showWarning(title: string, message: string, detail?: string) {
+  errorToastOptions.value = {
+    type: 'warning',
+    title,
+    message,
+    detail: detail || ''
+  };
+  showErrorToast.value = true;
+}
+
+/**
+ * 显示信息提示
+ */
+function showInfo(title: string, message: string, detail?: string) {
+  errorToastOptions.value = {
+    type: 'info',
+    title,
+    message,
+    detail: detail || ''
+  };
+  showErrorToast.value = true;
+}
+
+/**
  * 加载文件
  */
 function loadFile() {
@@ -777,7 +1079,22 @@ function loadFile() {
 /**
  * 关闭文件
  */
-function closeFile() {
+async function closeFile() {
+  // 显示确认对话框
+  const confirmed = await showConfirm({
+    type: 'warning',
+    title: '确认关闭文件',
+    message: '确定要关闭当前文件吗？',
+    detail: '请确保已保存所有更改',
+    confirmText: '关闭',
+    cancelText: '取消'
+  });
+  
+  if (!confirmed) {
+    historyStore.addLog('info', '已取消关闭操作');
+    return;
+  }
+  
   fileStore.setLoading(true);
   historyStore.addLog('info', '正在关闭文件...');
   
@@ -964,13 +1281,24 @@ function insertSheet() {
 /**
  * 删除工作表
  */
-function deleteSheet() {
+async function deleteSheet() {
   if (!deleteSheetName.value) {
-    historyStore.addLog('error', '请选择要删除的工作表');
+    showError('输入错误', '请选择要删除的工作表');
     return;
   }
   
-  if (!confirm(`确定要删除工作表 "${deleteSheetName.value}" 吗？`)) {
+  // 显示确认对话框
+  const confirmed = await showConfirm({
+    type: 'danger',
+    title: '确认删除工作表',
+    message: `确定要删除工作表"${deleteSheetName.value}"吗？`,
+    detail: '此操作无法撤销，工作表中的所有数据将被永久删除',
+    confirmText: '删除',
+    cancelText: '取消'
+  });
+  
+  if (!confirmed) {
+    historyStore.addLog('info', '已取消删除操作');
     return;
   }
   
@@ -1116,6 +1444,7 @@ function handlePythonMessage(message: any) {
     settingsStore.setConnected(true);
     historyStore.addLog('success', '后端连接成功');
     fileStore.setLoading(false);
+    showSuccess('连接成功', 'Python 后端已成功连接');
   } else if (message.type === 'result') {
     fileStore.setLoading(false);
     settingsStore.clearProgress();
@@ -1123,9 +1452,29 @@ function handlePythonMessage(message: any) {
     if (message.status === 'success') {
       historyStore.addLog('success', message.message);
       
-      // 如果是文件加载成功，保存文件信息
+      // 如果是文件加载成功，保存文件信息并添加到最近列表
       if (message.data && message.data.file_name) {
         fileStore.setLoadedFile(message.data);
+        
+        // 添加到最近文件列表
+        recentFilesStore.addRecentFile({
+          path: message.data.file_path,
+          name: message.data.file_name,
+          lastOpened: Date.now(),
+          size: message.data.file_size,
+          format: message.data.file_format
+        });
+        
+        showSuccess('加载成功', `文件 ${message.data.file_name} 已成功加载`);
+      } 
+      // 如果操作返回了更新的文件信息，更新 store
+      else if (message.data && message.data.file_info) {
+        fileStore.setLoadedFile(message.data.file_info);
+        showSuccess('操作成功', message.message);
+      }
+      else {
+        // 其他成功操作
+        showSuccess('操作成功', message.message);
       }
       
       // 如果是关闭文件，清除文件信息
@@ -1134,12 +1483,49 @@ function handlePythonMessage(message: any) {
       }
     } else {
       historyStore.addLog('error', message.message);
+      
+      // 显示错误提示
+      showError(
+        '操作失败',
+        message.message,
+        message.suggested_action || undefined
+      );
+      
       if (message.suggested_action) {
         historyStore.addLog('info', `建议: ${message.suggested_action}`);
       }
     }
   } else if (message.type === 'progress') {
     settingsStore.setProgress(message.progress, message.message);
+  } else if (message.type === 'batch_progress') {
+    // 批量处理进度更新
+    if (message.data) {
+      batchStore.updateProgress(
+        message.progress,
+        message.data.current_file || '',
+        message.data.current_file_index || 0,
+        message.data.total_files || 0
+      );
+    }
+  } else if (message.type === 'result' && (message.status === 'success' || message.status === 'partial_success') && message.data && message.data.results) {
+    // 批量处理完成
+    if (batchStore.currentTask) {
+      // 添加所有结果
+      message.data.results.forEach((result: any) => {
+        batchStore.addResult(result);
+      });
+      
+      batchStore.completeBatchTask();
+      
+      // 显示结果摘要
+      showBatchSummary.value = true;
+      
+      // 记录日志
+      historyStore.addLog(
+        message.status === 'success' ? 'success' : 'info',
+        message.message
+      );
+    }
   }
 }
 
@@ -1237,6 +1623,108 @@ function handleKeyboard(event: KeyboardEvent) {
 }
 
 /**
+ * 批量处理相关函数
+ */
+
+// 计算属性：是否可以开始批量处理
+const canStartBatch = computed(() => {
+  return batchFiles.value.length > 0 && batchOperation.value !== '';
+});
+
+// 选择批量文件
+async function selectBatchFiles() {
+  try {
+    const result = await window.dialogAPI.openFiles();
+    if (!result.canceled && result.filePaths.length > 0) {
+      batchFiles.value = [...batchFiles.value, ...result.filePaths];
+      historyStore.addLog('info', `已选择 ${result.filePaths.length} 个文件`);
+    }
+  } catch (error) {
+    console.error('选择文件失败:', error);
+    showError('选择失败', '无法打开文件选择对话框');
+  }
+}
+
+// 清除批量文件列表
+function clearBatchFiles() {
+  batchFiles.value = [];
+  historyStore.addLog('info', '已清除文件列表');
+}
+
+// 移除单个批量文件
+function removeBatchFile(index: number) {
+  batchFiles.value.splice(index, 1);
+}
+
+// 开始批量处理
+function startBatchProcessing() {
+  if (!canStartBatch.value) {
+    showError('参数错误', '请选择文件和操作');
+    return;
+  }
+  
+  // 创建批量任务
+  const task = {
+    id: Date.now().toString(),
+    name: `批量${getOperationName(batchOperation.value)}`,
+    files: [...batchFiles.value],
+    operation: batchOperation.value,
+    params: { ...batchOperationParams.value },
+    status: 'running' as const,
+    progress: 0,
+    currentFile: '',
+    currentFileIndex: 0,
+    totalFiles: batchFiles.value.length,
+    results: [],
+    startTime: Date.now(),
+  };
+  
+  batchStore.startBatchTask(task);
+  
+  historyStore.addLog('info', `开始批量处理 ${batchFiles.value.length} 个文件...`);
+  
+  // 发送批量处理命令
+  window.pythonBridge.sendCommand({
+    action: 'batch_process',
+    params: {
+      files: batchFiles.value,
+      operation: batchOperation.value,
+      operation_params: batchOperationParams.value,
+      save_files: true,
+    },
+  });
+}
+
+// 取消批量处理
+function cancelBatchProcessing() {
+  window.pythonBridge.sendCommand({
+    action: 'cancel_batch',
+    params: {},
+  });
+  
+  batchStore.cancelBatchTask();
+  historyStore.addLog('info', '已取消批量处理');
+}
+
+// 关闭批量摘要
+function closeBatchSummary() {
+  showBatchSummary.value = false;
+  batchStore.clearCurrentTask();
+}
+
+// 获取操作名称
+function getOperationName(operation: string): string {
+  const names: Record<string, string> = {
+    'remove_blank_rows': '删除空白行',
+    'clear_blank_cells': '清除空白单元格',
+    'remove_formulas': '删除公式',
+    'remove_duplicate_rows': '删除重复行',
+    'insert_sheet': '插入工作表',
+  };
+  return names[operation] || operation;
+}
+
+/**
  * 组件挂载时设置消息监听
  */
 onMounted(() => {
@@ -1245,6 +1733,9 @@ onMounted(() => {
   
   // 检查首次使用
   checkFirstTimeUser();
+  
+  // 加载批量处理模板
+  batchStore.loadTemplates();
   
   // 添加键盘快捷键监听
   window.addEventListener('keydown', handleKeyboard);
@@ -1487,6 +1978,15 @@ onUnmounted(() => {
   border-radius: 16px;
   padding: 30px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.file-select-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.file-select-buttons .btn {
+  flex: 1;
 }
 
 .file-actions {
@@ -1942,4 +2442,95 @@ onUnmounted(() => {
 ::-webkit-scrollbar-thumb:hover {
   background: #a0aec0;
 }
+
+/* 批量操作 */
+.batch-files-list {
+  margin-top: 16px;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.batch-files-header {
+  padding: 12px 16px;
+  background: #f8f9fb;
+  border-bottom: 1px solid #e1e4e8;
+  font-weight: 500;
+  color: #1a202c;
+  font-size: 14px;
+}
+
+.batch-files-items {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.batch-file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e1e4e8;
+  transition: background 0.2s;
+}
+
+.batch-file-item:last-child {
+  border-bottom: none;
+}
+
+.batch-file-item:hover {
+  background: #f8f9fb;
+}
+
+.file-icon {
+  font-size: 18px;
+}
+
+.file-path {
+  flex: 1;
+  color: #1a202c;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: #8b95a1;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.remove-btn:hover {
+  color: #ef4444;
+}
+
+.operation-params {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8f9fb;
+  border-radius: 8px;
+}
+
+.operation-params h4 {
+  margin: 0 0 12px 0;
+  color: #1a202c;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.batch-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.btn-large {
+  padding: 14px 32px;
+  font-size: 16px;
+}
+
 </style>

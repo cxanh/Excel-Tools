@@ -351,6 +351,23 @@ class FileLoader:
         """获取当前文件格式"""
         return self.file_format
     
+    def get_file_info(self) -> Optional[Dict[str, Any]]:
+        """
+        获取当前加载文件的信息
+        
+        Returns:
+            dict, 文件信息，如果没有加载文件则返回 None
+        """
+        if not self.current_workbook or not self.current_file_path:
+            return None
+        
+        if self.file_format == 'xlsx':
+            return self._get_file_info(self.current_workbook, self.current_file_path)
+        elif self.file_format == 'xls':
+            return self._get_file_info_xls(self.current_workbook, self.current_file_path)
+        else:
+            return None
+    
     def close(self, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         关闭当前工作簿
